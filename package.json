@@ -17,7 +17,11 @@
     "type": "git",
     "url": "git+https://github.com/VollySMS/Volly.git"
   },
-  "keywords": ["volunteer", "management", "awesomeness"],
+  "keywords": [
+    "volunteer",
+    "management",
+    "awesomeness"
+  ],
   "author": "Pedja Josifovic && Anthony Robinson && Robert Reed",
   "license": "MIT",
   "bugs": {
@@ -30,6 +34,7 @@
   },
   "dependencies": {
     "dotenv": "^4.0.0",
-    "express": "^4.16.2"
+    "express": "^4.16.2",
+    "mongoose": "^5.0.0-rc0"
   }
 }
