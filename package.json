@@ -1,22 +1,25 @@
 {
   "name": "volly",
   "version": "1.0.0",
-  "description": "",
+  "description": "Volunteer management platform.",
   "main": "index.js",
   "engines": {
     "node": "8.9.3"
   },
   "scripts": {
     "test": "jest -i --coverage",
-    "lint": "eslint ."
+    "lint": "eslint .",
+    "start": "node index.js",
+    "dbon": "mkdir -p ./db && mongod --dbpath ./db",
+    "dboff": "killall mongod"
   },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/VollySMS/Volly.git"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
+  "keywords": ["volunteer", "management", "awesomeness"],
+  "author": "Pedja Josifovic && Anthony Robinson && Robert Reed",
+  "license": "MIT",
   "bugs": {
     "url": "https://github.com/VollySMS/Volly/issues"
   },
