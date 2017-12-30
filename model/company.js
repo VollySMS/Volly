@@ -33,7 +33,7 @@ companySchema.methods.verifyPassword = function(password) {
   return bcrypt.compare(password, this.passwordHash)
     .then(response => {
       if(!response) {
-        throw new httpErrors(401, '__AUTH__ incorrect company name or password');
+        throw new httpErrors(401, '__AUTH__ unauthorized');
       }
       return this;
     });

@@ -80,5 +80,65 @@ describe('company-auth-router.js', () => {
           expect(response.body).toBeTruthy();
         });
     });
+
+    test('should respond with a 400 if no auth header is included', () => {
+      return companyMockFactory.create()
+        .then(() => {
+          return superagent.get(`${process.env.API_URL}/company-login`);
+        })
+        .then(Promise.reject)
+        .catch( response => {
+          expect(response.status).toEqual(400);
+        });
+    });
+
+    test('should respond with a 400 if authorization is sent without basic', () => {
+      return companyMockFactory.create()
+        .then(() => {
+          return superagent.get(`${process.env.API_URL}/company-login`)
+            .set('Authorization', 'invalid');
+        })
+        .then(Promise.reject)
+        .catch( response => {
+          expect(response.status).toEqual(400);
+        });
+    });
+
+    test('should respond with a 400 if basic auth is improperly encoded', () => {
+      return companyMockFactory.create()
+        .then(() => {
+          return superagent.get(`${process.env.API_URL}/company-login`)
+            .set('Authorization', 'Basic invalid');
+        })
+        .then(Promise.reject)
+        .catch( response => {
+          expect(response.status).toEqual(400);
+        });
+    });
+
+    test('should respond with a 404 if an invalid username or password is sent', () => {
+      return companyMockFactory.create()
+        .then(() => {
+          return superagent.get(`${process.env.API_URL}/company-login`)
+            .auth('invalidAccountName', 'invalidPassword');
+        })
+        .then(Promise.reject)
+        .catch( response => {
+          expect(response.status).toEqual(404);
+        });
+    });
+
+    test('should respond with a 401 if a valid name used but an invalid password is sent', () => {
+      return companyMockFactory.create()
+        .then(mock => {
+          return superagent.get(`${process.env.API_URL}/company-login`)
+            .auth(mock.request.accountName, 'invalidPassword');
+        })
+        .then(Promise.reject)
+        .catch( response => {
+          expect(response.status).toEqual(401);
+        });
+    });
+
   });
 });
