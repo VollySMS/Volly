@@ -24,5 +24,37 @@ describe('company-auth-router.js', () => {
           expect(response.body.token).toBeTruthy();
         });
     });
+
+    test('creating an account should respond with a 400 if a required field is missing', () => {
+      return superagent.post(`${process.env.API_URL}/company-signup`)
+        .send({
+          password: faker.internet.password(),
+          email: faker.internet.email(),
+        })
+        .then(Promise.reject)
+        .catch(response => {
+          expect(response.status).toEqual(400);
+        });
+    });
+
+    test('creating an account with duplicate information should return a 409', () => {
+      let company = null;
+      return companyMockFactory.create()
+        .then(mock => {
+          company = mock.company;
+          return superagent.post(`${process.env.API_URL}/company-signup`)
+            .send({
+              companyName: company.companyName,
+              password: faker.internet.password(),
+              email: faker.internet.email(),
+            });
+        })
+        .then(Promise.reject)
+        .catch(response => {
+          expect(response.status).toEqual(409);
+        });
+    });
+
+
   });
 });
