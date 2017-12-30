@@ -16,7 +16,7 @@ const companySchema = mongoose.Schema({
     required: true,
     unique: true,
   },
-  companyName: {
+  accountName: {
     type: String,
     required: true,
     unique: true,
@@ -26,13 +26,14 @@ const companySchema = mongoose.Schema({
     required: true,
     unique: true,
   },
+  //TODO: volunteers, events, methody stauff.
 });
 
 companySchema.methods.verifyPassword = function(password) {
   return bcrypt.compare(password, this.passwordHash)
     .then(response => {
       if(!response) {
-        throw new httpErrors(401, '__AUTH__ incorrect company name or password');
+        throw new httpErrors(401, '__AUTH__ unauthorized');
       }
       return this;
     });
@@ -50,17 +51,16 @@ companySchema.methods.createToken = function() {
 
 const Company = module.exports = mongoose.model('company', companySchema);
 
-Company.create = (companyName, password, email) => {
+Company.create = (accountName, password, email) => {
   const HASH_SALT_ROUNDS = 8;
   return bcrypt.hash(password, HASH_SALT_ROUNDS)
     .then(passwordHash => {
       let tokenSeed = crypto.randomBytes(64).toString('hex');
       return new Company({
-        companyName,
+        accountName,
         passwordHash,
         email,
         tokenSeed,
       }).save();
     });
 };
-
