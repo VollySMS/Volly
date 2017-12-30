@@ -48,7 +48,7 @@ companySchema.methods.createToken = function() {
     });
 };
 
-const Company = module.exports = mongoose.model('companie', companySchema);
+const Company = module.exports = mongoose.model('company', companySchema);
 
 Company.create = (companyName, password, email) => {
   const HASH_SALT_ROUNDS = 8;

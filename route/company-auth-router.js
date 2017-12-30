@@ -15,7 +15,7 @@ companyAuthRouter.post('/company-signup', jsonParser, (request, response, next) 
 
   return Company.create(request.body.companyName, request.body.password, request.body.email)
     .then(company => company.createToken())
-    .then(token => response.sendJson({token}))
+    .then(token => response.json({token}))
     .catch(next);
 });
 
