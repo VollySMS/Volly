@@ -60,3 +60,31 @@ volunteerAuthRouter.get('/volunteer/login', basicAuthVolunteer, (request, respon
     .then(token => response.json({token}))
     .catch(next);
 });
+
+volunteerAuthRouter.put('/volunteer/leave', bearerAuthVolunteer, jsonParser, (request, response, next) => {
+  if(!request.volunteer) {
+    return next(new httpErrors(404, '__ERROR__ volunteer not found'));
+  }
+
+  if(!request.body.companyId){
+    return next(new httpErrors(400, '__ERROR__ company id is required'));
+  }
+
+  return Company.findById(request.body.companyId)
+    .then(company => {
+      if(!company)
+        throw new httpErrors(404, '__ERROR__ company not found.');
+
+      company.activeVolunteers = company.activeVolunteers.filter(volunteerId => volunteerId.toString() !== request.volunteer._id.toString());
+      company.pendingVolunteers = company.pendingVolunteers.filter(volunteerId => volunteerId.toString() !== request.volunteer._id.toString());
+
+      return company.save();
+    })
+    .then(() => {
+      request.volunteer.activeCompanies = request.volunteer.activeCompanies.filter(companyId => companyId.toString() !== request.body.companyId.toString());
+      request.volunteer.pendingCompanies = request.volunteer.pendingCompanies.filter(companyId => companyId.toString() !== request.body.companyId.toString());
+      return request.volunteer.save();
+    })
+    .then(volunteer => response.json({volunteer}))
+    .catch(next);
+});

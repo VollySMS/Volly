@@ -281,4 +281,31 @@ describe('volunteer-auth-router.js', () => {
         });
     });
   });
+
+  describe('PUT /volunteer/leave', () => {
+    test('should return a 200 if pending company is successfully updated', () => {
+      let mock = {};
+      return volunteerMockFactory.createAndAdd()
+        .then(mockData => {
+          mock = mockData;
+          expect(mock.company.pendingVolunteers[0].toString()).toEqual(mock.volunteer._id.toString());
+          expect(mock.volunteer.pendingCompanies[0].toString()).toEqual(mock.company._id.toString());
+        })
+        .then(() => {
+          return superagent.put(`${process.env.API_URL}/volunteer/leave`)
+            .set('Authorization', `Bearer ${mock.volunteerToken}`)
+            .send({
+              companyId: mock.company._id,
+            });
+        })
+        .then(response => {
+          expect(response.body.volunteer.pendingCompanies.length).toEqual(0);
+          expect(response.status).toEqual(200);
+          return Company.findById(mock.company._id);
+        })
+        .then(company => {
+          expect(company.pendingVolunteers.length).toEqual(0);
+        });
+    });
+  });
 });
