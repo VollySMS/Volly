@@ -34,6 +34,13 @@ const companySchema = mongoose.Schema({
 },{
   usePushEach : true,
 
+  pendingVolunteers: [{
+    type : mongoose.Schema.Types.ObjectId,
+    ref : 'volunteer',
+  }],
+},{
+  usePushEach : true,
+
   //TODO:events, methody stauff.
 });
 

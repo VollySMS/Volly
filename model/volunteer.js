@@ -24,6 +24,12 @@ const volunteerSchema = mongoose.Schema({
     unique: true,
   },
 
+  phoneNumber: {
+    type: String,
+    required: true,
+    unique: true,
+  },
+
   tokenSeed: {
     type: String,
     required: true,
@@ -66,7 +72,7 @@ volunteerSchema.methods.createToken = function() {
 
 const Volunteer = module.exports = mongoose.model('volunteer', volunteerSchema);
 
-Volunteer.create = (name, userName, password, email) => {
+Volunteer.create = (name, userName, password, email, phoneNumber) => {
   const HASH_SALT_ROUNDS = 8;
   return bcrypt.hash(password, HASH_SALT_ROUNDS)
     .then(passwordHash => {
@@ -76,6 +82,7 @@ Volunteer.create = (name, userName, password, email) => {
         userName,
         passwordHash,
         email,
+        phoneNumber,
         tokenSeed,
       }).save();
     });

@@ -9,11 +9,11 @@ const basicAuthVolunteer = require('../lib/basic-auth-middleware')(Volunteer);
 const volunteerAuthRouter = module.exports = new Router();
 
 volunteerAuthRouter.post('/volunteer-signup', jsonParser, (request, response, next) => {
-  if(!request.body.name || !request.body.userName || !request.body.password || !request.body.email) {
-    return next(new httpErrors(400, '__ERROR__ <name>, <userName>, <email>, and <password> are required to sign up.'));
+  if(!request.body.name || !request.body.userName || !request.body.password || !request.body.email || !request.body.phoneNumber) {
+    return next(new httpErrors(400, '__ERROR__ <name>, <userName>, <email>, <phoneNumber>, and <password> are required to sign up.'));
   }
 
-  return Volunteer.create(request.body.name, request.body.userName, request.body.password, request.body.email)
+  return Volunteer.create(request.body.name, request.body.userName, request.body.password, request.body.email, request.body.phoneNumber)
     .then(volunteer => volunteer.createToken())
     .then(token => response.json({token}))
     .catch(next);
@@ -21,7 +21,7 @@ volunteerAuthRouter.post('/volunteer-signup', jsonParser, (request, response, ne
 
 volunteerAuthRouter.get('/volunteer-login', basicAuthVolunteer, (request, response, next) => {
   if(!request.volunteer) {
-    return next(new httpErrors(400, '__ERROR__ company not found'));
+    return next(new httpErrors(404, '__ERROR__ volunteer not found'));
   }
 
   return request.volunteer.createToken()

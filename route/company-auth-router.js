@@ -21,7 +21,7 @@ companyAuthRouter.post('/company-signup', jsonParser, (request, response, next) 
 
 companyAuthRouter.get('/company-login', basicAuthCompany, (request, response, next) => {
   if(!request.company) {
-    return next(new httpErrors(400, '__ERROR__ company not found'));
+    return next(new httpErrors(404, '__ERROR__ company not found'));
   }
 
   return request.company.createToken()

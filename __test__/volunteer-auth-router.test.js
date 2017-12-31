@@ -19,6 +19,7 @@ describe('volunteer-auth-router.js', () => {
           userName: faker.company.companyName(),
           password: faker.internet.password(),
           email: faker.internet.email(),
+          phoneNumber: faker.phone.phoneNumber(),
         })
         .then(response => {
           expect(response.status).toEqual(200);
@@ -49,6 +50,7 @@ describe('volunteer-auth-router.js', () => {
               userName: volunteer.userName,
               password: faker.internet.password(),
               email: faker.internet.email(),
+              phoneNumber: faker.phone.phoneNumber(),
             });
         })
         .then(Promise.reject)
@@ -64,6 +66,7 @@ describe('volunteer-auth-router.js', () => {
           userName: faker.company.companyName(),
           password: faker.internet.password(),
           email: faker.internet.email(),
+          phoneNumber: faker.phone.phoneNumber(),
         })
         .then(Promise.reject)
         .catch(response => {

@@ -12,8 +12,9 @@ volunteerMockFactory.create = () => {
     userName: faker.company.companyName(),
     password: faker.internet.password(),
     email: faker.internet.email(),
+    phoneNumber: faker.phone.phoneNumber(),
   };
-  return Volunteer.create(mock.request.name, mock.request.userName, mock.request.password, mock.request.email)
+  return Volunteer.create(mock.request.name, mock.request.userName, mock.request.password, mock.request.email, mock.request.phoneNumber)
     .then(volunteer => {
       mock.volunteer = volunteer;
       return volunteer.createToken();
