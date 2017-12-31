@@ -9,11 +9,11 @@ const basicAuthCompany = require('../lib/basic-auth-middleware')(Company);
 const companyAuthRouter = module.exports = new Router();
 
 companyAuthRouter.post('/company/signup', jsonParser, (request, response, next) => {
-  if(!request.body.companyName || !request.body.password || !request.body.email) {
-    return next(new httpErrors(400, '__ERROR__ <companyName>, <email>, and <password> are required to sign up.'));
+  if(!request.body.companyName || !request.body.password || !request.body.email || !request.body.phoneNumber) {
+    return next(new httpErrors(400, '__ERROR__ <companyName>, <email>, <phoneNumber> and <password> are required to sign up.'));
   }
 
-  return Company.create(request.body.companyName, request.body.password, request.body.email)
+  return Company.create(request.body.companyName, request.body.password, request.body.email, request.body.phoneNumber)
     .then(company => company.createToken())
     .then(token => response.json({token}))
     .catch(next);
