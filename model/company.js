@@ -16,7 +16,7 @@ const companySchema = mongoose.Schema({
     required: true,
     unique: true,
   },
-  accountName: {
+  companyName: {
     type: String,
     required: true,
     unique: true,
@@ -51,16 +51,18 @@ companySchema.methods.createToken = function() {
 
 const Company = module.exports = mongoose.model('company', companySchema);
 
-Company.create = (accountName, password, email) => {
+Company.create = (companyName, password, email) => {
   const HASH_SALT_ROUNDS = 8;
   return bcrypt.hash(password, HASH_SALT_ROUNDS)
     .then(passwordHash => {
       let tokenSeed = crypto.randomBytes(64).toString('hex');
       return new Company({
-        accountName,
+        companyName,
         passwordHash,
         email,
         tokenSeed,
       }).save();
     });
 };
+
+Company.model = 'company';

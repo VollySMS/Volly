@@ -15,7 +15,7 @@ describe('company-auth-router.js', () => {
     test('creating an account should respond with a 200 status and a token', () => {
       return superagent.post(`${process.env.API_URL}/company-signup`)
         .send({
-          accountName: faker.company.companyName(),
+          companyName: faker.company.companyName(),
           password: faker.internet.password(),
           email: faker.internet.email(),
         })
@@ -44,7 +44,7 @@ describe('company-auth-router.js', () => {
           company = mock.company;
           return superagent.post(`${process.env.API_URL}/company-signup`)
             .send({
-              accountName: company.accountName,
+              companyName: company.companyName,
               password: faker.internet.password(),
               email: faker.internet.email(),
             });
@@ -58,7 +58,7 @@ describe('company-auth-router.js', () => {
     test('should respond with a 404 status if a bad enpoint is hit', () => {
       return superagent.post(`${process.env.API_URL}/bad-path`)
         .send({
-          accountName: faker.company.companyName(),
+          companyName: faker.company.companyName(),
           password: faker.internet.password(),
           email: faker.internet.email(),
         })
@@ -73,7 +73,7 @@ describe('company-auth-router.js', () => {
       return companyMockFactory.create()
         .then(mock => {
           return superagent.get(`${process.env.API_URL}/company-login`)
-            .auth(mock.request.accountName, mock.request.password);
+            .auth(mock.request.companyName, mock.request.password);
         })
         .then( response => {
           expect(response.status).toEqual(200);
@@ -120,7 +120,7 @@ describe('company-auth-router.js', () => {
       return companyMockFactory.create()
         .then(() => {
           return superagent.get(`${process.env.API_URL}/company-login`)
-            .auth('invalidAccountName', 'invalidPassword');
+            .auth('invalidCompanyName', 'invalidPassword');
         })
         .then(Promise.reject)
         .catch( response => {
@@ -132,7 +132,7 @@ describe('company-auth-router.js', () => {
       return companyMockFactory.create()
         .then(mock => {
           return superagent.get(`${process.env.API_URL}/company-login`)
-            .auth(mock.request.accountName, 'invalidPassword');
+            .auth(mock.request.companyName, 'invalidPassword');
         })
         .then(Promise.reject)
         .catch( response => {
