@@ -8,11 +8,11 @@ const companyMockFactory = module.exports = {};
 companyMockFactory.create = () => {
   let mock = {};
   mock.request = {
-    accountName: faker.company.companyName(),
+    companyName: faker.company.companyName(),
     password: faker.internet.password(),
     email: faker.internet.email(),
   };
-  return Company.create(mock.request.accountName, mock.request.password, mock.request.email)
+  return Company.create(mock.request.companyName, mock.request.password, mock.request.email)
     .then(company => {
       mock.company = company;
       return company.createToken();
