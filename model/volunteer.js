@@ -6,43 +6,51 @@ const httpErrors = require('http-errors');
 const jsonWebToken = require('jsonwebtoken');
 const mongoose = require('mongoose');
 
-const companySchema = mongoose.Schema({
-  passwordHash: {
+const volunteerSchema = mongoose.Schema({
+  name: {
     type: String,
     required: true,
   },
+
+  userName: {
+    type: String,
+    unique: true,
+    required: true,
+  },
+
   email: {
     type: String,
     required: true,
     unique: true,
   },
-  companyName: {
+
+  phoneNumber: {
     type: String,
     required: true,
     unique: true,
   },
+
   tokenSeed: {
     type: String,
     required: true,
     unique: true,
   },
-  pendingVolunteers: [{
-    type : mongoose.Schema.Types.ObjectId,
-    ref : 'volunteer',
-  }],
 
-  volunteers: [{
+  passwordHash: {
+    type: String,
+    required: true,
+  },
+
+  companies: [{
     type : mongoose.Schema.Types.ObjectId,
-    ref : 'volunteer',
+    ref : 'company',
   }],
-},
-{
+},{
   usePushEach : true,
 
-  //TODO:events, methody stuff
 });
 
-companySchema.methods.verifyPassword = function(password) {
+volunteerSchema.methods.verifyPassword = function(password) {
   return bcrypt.compare(password, this.passwordHash)
     .then(response => {
       if(!response) {
@@ -52,30 +60,33 @@ companySchema.methods.verifyPassword = function(password) {
     });
 };
 
-companySchema.methods.createToken = function() {
+volunteerSchema.methods.createToken = function() {
   this.tokenSeed = crypto.randomBytes(64).toString('hex');
   return this.save()
-    .then(company => {
+    .then(volunteer => {
       return jsonWebToken.sign({
-        tokenSeed: company.tokenSeed,
+        tokenSeed: volunteer.tokenSeed,
       }, process.env.SALT_SECRET);
     });
 };
 
-const Company = module.exports = mongoose.model('company', companySchema);
+const Volunteer = module.exports = mongoose.model('volunteer', volunteerSchema);
 
-Company.create = (companyName, password, email) => {
+Volunteer.create = (name, userName, password, email, phoneNumber) => {
   const HASH_SALT_ROUNDS = 8;
   return bcrypt.hash(password, HASH_SALT_ROUNDS)
     .then(passwordHash => {
       let tokenSeed = crypto.randomBytes(64).toString('hex');
-      return new Company({
-        companyName,
+      return new Volunteer({
+        name,
+        userName,
         passwordHash,
         email,
+        phoneNumber,
         tokenSeed,
       }).save();
     });
 };
 
-Company.model = Company.login = 'company';
+Volunteer.model = 'volunteer';
+Volunteer.login = 'user';
