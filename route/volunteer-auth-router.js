@@ -29,9 +29,12 @@ volunteerAuthRouter.post('/volunteer/apply', bearerAuthVolunteer, jsonParser, (r
     .then(company => {
       if(!company)
         throw new httpErrors(404, '__ERROR__ company not found.');
-            
-      if(company.pendingVolunteers.includes(request.volunteerId))
-        throw new httpErrors(409, '__ERROR__ duplicate volunteer.');
+
+      for(let volunteer of company.pendingVolunteers) {
+        if(volunteer.toString() === request.volunteerId.toString()) {
+          throw new httpErrors(409, '__ERROR__ duplicate volunteer.');
+        }
+      }
 
       company.pendingVolunteers.push(request.volunteerId);
       return company.save();

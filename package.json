@@ -3,9 +3,6 @@
   "version": "1.0.0",
   "description": "Volunteer management platform.",
   "main": "index.js",
-  "engines": {
-    "node": "8.9.3"
-  },
   "scripts": {
     "test": "jest -i --coverage",
     "test-company": "jest -i --coverage company-auth-router.test.js",

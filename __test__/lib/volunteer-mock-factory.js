@@ -51,7 +51,6 @@ volunteerMockFactory.createAndAdd = () => {
   return volunteerMockFactory.createWithCompany()
     .then(mockData => {
       mock = mockData;
-      console.log(mock);
       
       mock.company.pendingVolunteers.push(mock.volunteer._id);
       return mock.company.save();
@@ -62,7 +61,7 @@ volunteerMockFactory.createAndAdd = () => {
 
 volunteerMockFactory.remove = () => {  
   return Promise.all([
-    Volunteer.remove({}),
     companyMockFactory.remove(),
+    Volunteer.remove({}),
   ]);
 };

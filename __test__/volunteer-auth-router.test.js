@@ -152,35 +152,93 @@ describe('volunteer-auth-router.js', () => {
   });
 
   describe('POST /volunteer/apply', () => {
-    let mock = null;
-    beforeEach(() => {
-      return volunteerMockFactory.createWithCompany()
-        .then(mockData => {
-          mock = mockData;
-        });
-    });
     afterEach(volunteerMockFactory.remove);
 
     test('applying to company should respond with a 200 status', () => {
-      return superagent.post(`${process.env.API_URL}/volunteer/apply`)
-        .set('Authorization', `Bearer ${mock.volunteerToken}`)
-        .send({
-          companyId: mock.company._id,
-        })
-        .then(response => {
-          expect(response.status).toEqual(200);
-          return Company.findById(mock.company._id);
-        })
-        .then(company => {
-          expect(company.pendingVolunteers[0]).toEqual(mock.volunteer._id);
+      return volunteerMockFactory.createWithCompany()
+        .then(mock => {
+          return superagent.post(`${process.env.API_URL}/volunteer/apply`)
+            .set('Authorization', `Bearer ${mock.volunteerToken}`)
+            .send({
+              companyId: mock.company._id,
+            })
+            .then(response => {
+              expect(response.status).toEqual(200);
+              return Company.findById(mock.company._id);
+            })
+            .then(company => {
+              expect(company.pendingVolunteers[0]).toEqual(mock.volunteer._id);
+            });
         });
     });
 
     test('should return status code 400 if invalid company id is provided', () => {
-      return superagent.post(`${process.env.API_URL}/volunteer/apply`)
-        .set('Authorization', `Bearer ${mock.volunteerToken}`)
-        .send({
-          invalidId: mock.company._id,
+      return volunteerMockFactory.createWithCompany()
+        .then(mock => {
+          return superagent.post(`${process.env.API_URL}/volunteer/apply`)
+            .set('Authorization', `Bearer ${mock.volunteerToken}`)
+            .send({
+              invalidId: mock.company._id,
+            })
+            .then(Promise.reject)
+            .catch(response => {
+              expect(response.status).toEqual(400);
+            });
+        });
+    });
+
+    test('applying to the same company while still pending should return a 409', () => {
+      return volunteerMockFactory.createAndAdd()
+        .then(mock => {
+          return superagent.post(`${process.env.API_URL}/volunteer/apply`)
+            .set('Authorization', `Bearer ${mock.volunteerToken}`)
+            .send({
+              companyId: mock.company._id,
+            });
+        })
+        .then(Promise.reject)
+        .catch(response => {
+          expect(response.status).toEqual(409);
+        });
+    });
+
+    test('should respond with a 404 status if you apply to a company that cannot be found', () => {
+      return volunteerMockFactory.createWithCompany()
+        .then(mock => {
+          return superagent.post(`${process.env.API_URL}/volunteer/apply`)
+            .set('Authorization', `Bearer ${mock.volunteerToken}`)
+            .send({
+              companyId: 'fake-company-id',
+            }); 
+        })
+        .then(Promise.reject)
+        .catch(response => {
+          expect(response.status).toEqual(404);
+        });
+    });
+
+    test('should respond with a 401 status if you fail to send valid Bearer auth', () => {
+      return volunteerMockFactory.createWithCompany()
+        .then(mock => {
+          return superagent.post(`${process.env.API_URL}/volunteer/apply`)
+            .set('Authorization', `Bearer bad-auth-token`)
+            .send({
+              companyId: mock.company._id,
+            }); 
+        })
+        .then(Promise.reject)
+        .catch(response => {
+          expect(response.status).toEqual(401);
+        });
+    });
+
+    test('should respond with a 400 status if bearer auth is not sent', () => {
+      return volunteerMockFactory.createWithCompany()
+        .then(mock => {
+          return superagent.post(`${process.env.API_URL}/volunteer/apply`)
+            .send({
+              companyId: mock.company._id,
+            }); 
         })
         .then(Promise.reject)
         .catch(response => {
@@ -188,34 +246,34 @@ describe('volunteer-auth-router.js', () => {
         });
     });
 
-    // test.only('creating an account with duplicate information should return a 409', () => {
-    //   return volunteerMockFactory.createAndAdd()
-    //     .then(mock => {
-    //       return superagent.post(`${process.env.API_URL}/volunteer/apply`)
-    //         .set('Authorization', `Bearer ${mock.volunteerToken}`)
-    //         .send({
-    //           companyId: mock.company._id,
-    //         });
-    //     })
-    //     .then(Promise.reject)
-    //     .catch(response => {
-    //       expect(response.status).toEqual(409);
-    //     });
-    // });
-
-    // test('should respond with a 404 status if a bad enpoint is hit', () => {
-    //   return superagent.post(`${process.env.API_URL}/bad-path`)
-    //     .send({
-    //       name: faker.name.firstName() + ' ' + faker.name.lastName(),
-    //       userName: faker.company.companyName(),
-    //       password: faker.internet.password(),
-    //       email: faker.internet.email(),
-    //       phoneNumber: faker.phone.phoneNumber(),
-    //     })
-    //     .then(Promise.reject)
-    //     .catch(response => {
-    //       expect(response.status).toEqual(404);
-    //     });
-    // });
+    test('should respond with a 400 status if no token is sent with the bearer auth', () => {
+      return volunteerMockFactory.createWithCompany()
+        .then(mock => {
+          return superagent.post(`${process.env.API_URL}/volunteer/apply`)
+            .set('Authorization', `Bearer`)
+            .send({
+              companyId: mock.company._id,
+            }); 
+        })
+        .then(Promise.reject)
+        .catch(response => {
+          expect(response.status).toEqual(400);
+        });
+    });
+    
+    test('should respond with a 404 status if no account is found with the given token', () => {
+      return volunteerMockFactory.createWithCompany()
+        .then(mock => {
+          return superagent.post(`${process.env.API_URL}/volunteer/apply`)
+            .set('Authorization', `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlblNlZWQiOiIzNDBkY2JhOGQyOGY3OTUzZjcxOGM0NzQ0NDY3ZjRjMTNkMTc5YjQ3MTQ4OWNjZjA0ZThkODJhN2I4MzdiZWRjZjEwNTRiODgwMDFjNjEwYzRmYzJiYzVmMjI2NGU2OTcyMGYwZjY0OTMwYzNiYjVlYmFiNTJiMDgwYTg4ZmJkYiIsImlhdCI6MTUxNDc0OTU5N30.14ukuDv4Zo6Ch29UW1Qa0RKXdOgSaRx9jiXIRJA35mI`)
+            .send({
+              companyId: mock.company._id,
+            }); 
+        })
+        .then(Promise.reject)
+        .catch(response => {
+          expect(response.status).toEqual(404);
+        });
+    });
   });
 });
