@@ -39,6 +39,13 @@ volunteerAuthRouter.post('/volunteer/apply', bearerAuthVolunteer, jsonParser, (r
       company.pendingVolunteers.push(request.volunteerId);
       return company.save();
     })
+    .then(() => Volunteer.findById(request.volunteerId))
+    .then(volunteer => {
+      if(!volunteer)
+        throw new httpErrors(404, '__ERROR__ volunteer not found.');
+      volunteer.pendingCompanies.push(request.body.companyId);
+      return volunteer.save();
+    })
     .then(() => response.sendStatus(200))
     .catch(next);
 

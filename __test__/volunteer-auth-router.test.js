@@ -7,6 +7,7 @@ const superagent = require('superagent');
 const volunteerMockFactory = require('./lib/volunteer-mock-factory');
 
 const Company = require('../model/company');
+const Volunteer = require('../model/volunteer');
 
 
 describe('volunteer-auth-router.js', () => {
@@ -168,6 +169,10 @@ describe('volunteer-auth-router.js', () => {
             })
             .then(company => {
               expect(company.pendingVolunteers[0]).toEqual(mock.volunteer._id);
+              return Volunteer.findById(mock.volunteer._id);
+            })
+            .then(volunteer => {
+              expect(volunteer.pendingCompanies[0]).toEqual(mock.company._id);
             });
         });
     });
@@ -209,7 +214,7 @@ describe('volunteer-auth-router.js', () => {
             .set('Authorization', `Bearer ${mock.volunteerToken}`)
             .send({
               companyId: 'fake-company-id',
-            }); 
+            });
         })
         .then(Promise.reject)
         .catch(response => {
@@ -224,7 +229,7 @@ describe('volunteer-auth-router.js', () => {
             .set('Authorization', `Bearer bad-auth-token`)
             .send({
               companyId: mock.company._id,
-            }); 
+            });
         })
         .then(Promise.reject)
         .catch(response => {
@@ -238,7 +243,7 @@ describe('volunteer-auth-router.js', () => {
           return superagent.post(`${process.env.API_URL}/volunteer/apply`)
             .send({
               companyId: mock.company._id,
-            }); 
+            });
         })
         .then(Promise.reject)
         .catch(response => {
@@ -253,14 +258,14 @@ describe('volunteer-auth-router.js', () => {
             .set('Authorization', `Bearer`)
             .send({
               companyId: mock.company._id,
-            }); 
+            });
         })
         .then(Promise.reject)
         .catch(response => {
           expect(response.status).toEqual(400);
         });
     });
-    
+
     test('should respond with a 404 status if no account is found with the given token', () => {
       return volunteerMockFactory.createWithCompany()
         .then(mock => {
@@ -268,7 +273,7 @@ describe('volunteer-auth-router.js', () => {
             .set('Authorization', `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlblNlZWQiOiIzNDBkY2JhOGQyOGY3OTUzZjcxOGM0NzQ0NDY3ZjRjMTNkMTc5YjQ3MTQ4OWNjZjA0ZThkODJhN2I4MzdiZWRjZjEwNTRiODgwMDFjNjEwYzRmYzJiYzVmMjI2NGU2OTcyMGYwZjY0OTMwYzNiYjVlYmFiNTJiMDgwYTg4ZmJkYiIsImlhdCI6MTUxNDc0OTU5N30.14ukuDv4Zo6Ch29UW1Qa0RKXdOgSaRx9jiXIRJA35mI`)
             .send({
               companyId: mock.company._id,
-            }); 
+            });
         })
         .then(Promise.reject)
         .catch(response => {

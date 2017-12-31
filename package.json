@@ -5,8 +5,8 @@
   "main": "index.js",
   "scripts": {
     "test": "jest -i --coverage",
-    "test-company": "jest -i --coverage company-auth-router.test.js",
-    "test-volunteer": "jest -i --coverage volunteer-auth-router.test.js",
+    "test-c": "jest -i --coverage company-auth-router.test.js",
+    "test-v": "jest -i --coverage volunteer-auth-router.test.js",
     "lint": "eslint .",
     "start": "node index.js",
     "dbon": "mkdir -p ./db && mongod --dbpath ./db",

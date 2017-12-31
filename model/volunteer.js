@@ -41,7 +41,12 @@ const volunteerSchema = mongoose.Schema({
     required: true,
   },
 
-  companies: [{
+  activeCompanies: [{
+    type : mongoose.Schema.Types.ObjectId,
+    ref : 'company',
+  }],
+  
+  pendingCompanies: [{
     type : mongoose.Schema.Types.ObjectId,
     ref : 'company',
   }],
