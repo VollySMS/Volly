@@ -73,4 +73,4 @@ Company.create = (companyName, password, email) => {
     });
 };
 
-Company.model = 'company';
+Company.model = Company.login = 'company';

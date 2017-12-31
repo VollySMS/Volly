@@ -82,3 +82,4 @@ Volunteer.create = (name, userName, password, email) => {
 };
 
 Volunteer.model = 'volunteer';
+Volunteer.login = 'user';
