@@ -36,6 +36,7 @@ volunteerMockFactory.createWithCompany = () => {
   return companyMockFactory.create()
     .then(company => {
       mock.company = company.company;
+      mock.companyToken = company.token;
       return volunteerMockFactory.create();
     })
     .then(volunteer => {
