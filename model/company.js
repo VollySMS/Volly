@@ -26,6 +26,10 @@ const companySchema = mongoose.Schema({
     required: true,
     unique: true,
   },
+  pendingVolunteers: [{
+    type : mongoose.Schema.Types.ObjectId,
+    ref : 'volunteer',
+  }],
 
   volunteers: [{
     type : mongoose.Schema.Types.ObjectId,
@@ -34,14 +38,7 @@ const companySchema = mongoose.Schema({
 },{
   usePushEach : true,
 
-  pendingVolunteers: [{
-    type : mongoose.Schema.Types.ObjectId,
-    ref : 'volunteer',
-  }],
-},{
-  usePushEach : true,
-
-  //TODO:events, methody stauff.
+  //TODO:events, methody stuff
 });
 
 companySchema.methods.verifyPassword = function(password) {

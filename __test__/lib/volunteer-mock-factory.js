@@ -2,6 +2,7 @@
 
 const faker = require('faker');
 const Volunteer = require('../../model/volunteer');
+const companyMockFactory = require('./company-mock-factory');
 
 const volunteerMockFactory = module.exports = {};
 
@@ -30,4 +31,38 @@ volunteerMockFactory.create = () => {
     .catch(console.log);
 };
 
-volunteerMockFactory.remove = () => Volunteer.remove({});
+volunteerMockFactory.createWithCompany = () => {
+  let mock = {};
+  return companyMockFactory.create()
+    .then(company => {
+      mock.company = company.company;
+      return volunteerMockFactory.create();
+    })
+    .then(volunteer => {
+      mock.volunteer = volunteer.volunteer;
+      mock.volunteerToken = volunteer.token;
+      return mock;
+    })
+    .catch(console.log);
+};
+
+volunteerMockFactory.createAndAdd = () => {
+  let mock = {};
+  return volunteerMockFactory.createWithCompany()
+    .then(mockData => {
+      mock = mockData;
+      console.log(mock);
+      
+      mock.company.pendingVolunteers.push(mock.volunteer._id);
+      return mock.company.save();
+    })
+    .then(() => mock)
+    .catch(console.log);
+};
+
+volunteerMockFactory.remove = () => {  
+  return Promise.all([
+    Volunteer.remove({}),
+    companyMockFactory.remove(),
+  ]);
+};
