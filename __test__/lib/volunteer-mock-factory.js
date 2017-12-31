@@ -36,6 +36,7 @@ volunteerMockFactory.createWithCompany = () => {
   return companyMockFactory.create()
     .then(company => {
       mock.company = company.company;
+      mock.companyToken = company.token;
       return volunteerMockFactory.create();
     })
     .then(volunteer => {
@@ -51,15 +52,19 @@ volunteerMockFactory.createAndAdd = () => {
   return volunteerMockFactory.createWithCompany()
     .then(mockData => {
       mock = mockData;
-      
+
       mock.company.pendingVolunteers.push(mock.volunteer._id);
       return mock.company.save();
+    })
+    .then(() => {
+      mock.volunteer.pendingCompanies.push(mock.company._id);
+      return mock.volunteer.save();
     })
     .then(() => mock)
     .catch(console.log);
 };
 
-volunteerMockFactory.remove = () => {  
+volunteerMockFactory.remove = () => {
   return Promise.all([
     companyMockFactory.remove(),
     Volunteer.remove({}),

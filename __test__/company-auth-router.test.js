@@ -5,11 +5,12 @@ const faker = require('faker');
 const server = require('../lib/server');
 const superagent = require('superagent');
 const companyMockFactory = require('./lib/company-mock-factory');
+const volunteerMockFactory = require('./lib/volunteer-mock-factory');
 
 describe('company-auth-router.js', () => {
   beforeAll(server.start);
   afterAll(server.stop);
-  afterEach(companyMockFactory.remove);
+  afterEach(volunteerMockFactory.remove);
 
   describe('POST /company/signup', () => {
     test('creating an account should respond with a 200 status and a token', () => {
@@ -18,6 +19,7 @@ describe('company-auth-router.js', () => {
           companyName: faker.company.companyName(),
           password: faker.internet.password(),
           email: faker.internet.email(),
+          phoneNumber: faker.phone.phoneNumber(),
         })
         .then(response => {
           expect(response.status).toEqual(200);
@@ -30,6 +32,7 @@ describe('company-auth-router.js', () => {
         .send({
           password: faker.internet.password(),
           email: faker.internet.email(),
+          phoneNumber: faker.phone.phoneNumber(),
         })
         .then(Promise.reject)
         .catch(response => {
@@ -47,6 +50,7 @@ describe('company-auth-router.js', () => {
               companyName: company.companyName,
               password: faker.internet.password(),
               email: faker.internet.email(),
+              phoneNumber: faker.phone.phoneNumber(),
             });
         })
         .then(Promise.reject)
@@ -61,6 +65,7 @@ describe('company-auth-router.js', () => {
           companyName: faker.company.companyName(),
           password: faker.internet.password(),
           email: faker.internet.email(),
+          phoneNumber: faker.phone.phoneNumber(),
         })
         .then(Promise.reject)
         .catch(response => {
@@ -68,77 +73,96 @@ describe('company-auth-router.js', () => {
         });
     });
   });
-  describe('GET /company/login', () => {
-    test('should respond with a 200 and a token', () => {
-      return companyMockFactory.create()
-        .then(mock => {
-          return superagent.get(`${process.env.API_URL}/company/login`)
-            .auth(mock.request.companyName, mock.request.password);
-        })
-        .then( response => {
-          expect(response.status).toEqual(200);
-          expect(response.body).toBeTruthy();
-        });
+
+  describe('GET', () => {
+    describe('GET /company/login', () => {
+      test('should respond with a 200 and a token', () => {
+        return companyMockFactory.create()
+          .then(mock => {
+            return superagent.get(`${process.env.API_URL}/company/login`)
+              .auth(mock.request.companyName, mock.request.password);
+          })
+          .then( response => {
+            expect(response.status).toEqual(200);
+            expect(response.body).toBeTruthy();
+          });
+      });
+
+      test('should respond with a 400 if no auth header is included', () => {
+        return companyMockFactory.create()
+          .then(() => {
+            return superagent.get(`${process.env.API_URL}/company/login`);
+          })
+          .then(Promise.reject)
+          .catch( response => {
+            expect(response.status).toEqual(400);
+          });
+      });
+
+      test('should respond with a 400 if authorization is sent without basic', () => {
+        return companyMockFactory.create()
+          .then(() => {
+            return superagent.get(`${process.env.API_URL}/company/login`)
+              .set('Authorization', 'invalid');
+          })
+          .then(Promise.reject)
+          .catch( response => {
+            expect(response.status).toEqual(400);
+          });
+      });
+
+      test('should respond with a 400 if basic auth is improperly encoded', () => {
+        return companyMockFactory.create()
+          .then(() => {
+            return superagent.get(`${process.env.API_URL}/company/login`)
+              .set('Authorization', 'Basic invalid');
+          })
+          .then(Promise.reject)
+          .catch( response => {
+            expect(response.status).toEqual(400);
+          });
+      });
+
+      test('should respond with a 404 if an invalid username or password is sent', () => {
+        return companyMockFactory.create()
+          .then(() => {
+            return superagent.get(`${process.env.API_URL}/company/login`)
+              .auth('invalidCompanyName', 'invalidPassword');
+          })
+          .then(Promise.reject)
+          .catch( response => {
+            expect(response.status).toEqual(404);
+          });
+      });
+
+      test('should respond with a 401 if a valid name used but an invalid password is sent', () => {
+        return companyMockFactory.create()
+          .then(mock => {
+            return superagent.get(`${process.env.API_URL}/company/login`)
+              .auth(mock.request.companyName, 'invalidPassword');
+          })
+          .then(Promise.reject)
+          .catch( response => {
+            expect(response.status).toEqual(401);
+          });
+      });
     });
 
-    test('should respond with a 400 if no auth header is included', () => {
-      return companyMockFactory.create()
-        .then(() => {
-          return superagent.get(`${process.env.API_URL}/company/login`);
-        })
-        .then(Promise.reject)
-        .catch( response => {
-          expect(response.status).toEqual(400);
-        });
+    describe('GET /company/pending', () => {
+      test('should return a 200 if pending volunteers are successfully found', () => {
+        let mock = {};
+        return volunteerMockFactory.createAndAdd()
+          .then(mockData => {
+            mock = mockData;
+            return superagent.get(`${process.env.API_URL}/company/pending`)
+              .set('Authorization', `Bearer ${mock.companyToken}`);
+          })
+          .then(response => {
+            expect(response.body.pendingVolunteers[0].toString()).toEqual(mock.volunteer._id.toString());
+            expect(response.status).toEqual(200);
+          });
+      });
     });
-
-    test('should respond with a 400 if authorization is sent without basic', () => {
-      return companyMockFactory.create()
-        .then(() => {
-          return superagent.get(`${process.env.API_URL}/company/login`)
-            .set('Authorization', 'invalid');
-        })
-        .then(Promise.reject)
-        .catch( response => {
-          expect(response.status).toEqual(400);
-        });
-    });
-
-    test('should respond with a 400 if basic auth is improperly encoded', () => {
-      return companyMockFactory.create()
-        .then(() => {
-          return superagent.get(`${process.env.API_URL}/company/login`)
-            .set('Authorization', 'Basic invalid');
-        })
-        .then(Promise.reject)
-        .catch( response => {
-          expect(response.status).toEqual(400);
-        });
-    });
-
-    test('should respond with a 404 if an invalid username or password is sent', () => {
-      return companyMockFactory.create()
-        .then(() => {
-          return superagent.get(`${process.env.API_URL}/company/login`)
-            .auth('invalidCompanyName', 'invalidPassword');
-        })
-        .then(Promise.reject)
-        .catch( response => {
-          expect(response.status).toEqual(404);
-        });
-    });
-
-    test('should respond with a 401 if a valid name used but an invalid password is sent', () => {
-      return companyMockFactory.create()
-        .then(mock => {
-          return superagent.get(`${process.env.API_URL}/company/login`)
-            .auth(mock.request.companyName, 'invalidPassword');
-        })
-        .then(Promise.reject)
-        .catch( response => {
-          expect(response.status).toEqual(401);
-        });
-    });
-
   });
+
 });
