@@ -8,7 +8,7 @@ const volunteerMockFactory = module.exports = {};
 volunteerMockFactory.create = () => {
   let mock = {};
   mock.request = {
-    name: faker.name.firstName()+faker.name.lastName(),
+    name: faker.name.firstName() + ' ' + faker.name.lastName(),
     userName: faker.company.companyName(),
     password: faker.internet.password(),
     email: faker.internet.email(),
