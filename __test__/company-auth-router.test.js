@@ -4,6 +4,7 @@ require('./lib/setup');
 const faker = require('faker');
 const server = require('../lib/server');
 const superagent = require('superagent');
+const Volunteer = require('../model/volunteer');
 const companyMockFactory = require('./lib/company-mock-factory');
 const volunteerMockFactory = require('./lib/volunteer-mock-factory');
 
@@ -161,6 +162,32 @@ describe('company-auth-router.js', () => {
             expect(response.body.pendingVolunteers[0].toString()).toEqual(mock.volunteer._id.toString());
             expect(response.status).toEqual(200);
           });
+      });
+    });
+  });
+
+  describe('PUT', () => {
+    describe('PUT /company/approve', () => {
+      test('should return object with active and pending volunteers arrays', () => {
+        let mock = {};
+        return volunteerMockFactory.createAndAdd()
+          .then(mockData => {
+            mock = mockData;            
+            return superagent.put(`${process.env.API_URL}/company/approve`)
+              .set('Authorization', `Bearer ${mock.companyToken}`)
+              .send({volunteerId: mock.volunteer._id});
+          })
+          .then(response => {
+            expect(response.status).toEqual(200);
+            expect(response.body.pendingVolunteers.length).toEqual(0);
+            expect(response.body.activeVolunteers[0].toString()).toEqual(mock.volunteer._id.toString());
+            return Volunteer.findById(mock.volunteer._id);
+          })
+          .then(volunteer => {
+            expect(volunteer.pendingCompanies.length).toEqual(0);
+            expect(volunteer.activeCompanies[0].toString()).toEqual(mock.company._id.toString());
+          });
+          
       });
     });
   });
