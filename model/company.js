@@ -6,7 +6,7 @@ const httpErrors = require('http-errors');
 const jsonWebToken = require('jsonwebtoken');
 const mongoose = require('mongoose');
 
-const companySchema = mongoose.Schema({ // TODO: add website property
+const companySchema = mongoose.Schema({ 
   passwordHash: {
     type: String,
     required: true,

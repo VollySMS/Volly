@@ -42,6 +42,12 @@ volunteerAuthRouter.put('/volunteer/apply', bearerAuthVolunteer, jsonParser, (re
       if(!company)
         throw new httpErrors(404, '__ERROR__ company not found.');
 
+      for(let volunteer of company.activeVolunteers) {
+        if(volunteer.toString() === request.volunteerId.toString()) {
+          throw new httpErrors(409, '__ERROR__ duplicate volunteer.');
+        }
+      }
+
       for(let volunteer of company.pendingVolunteers) {
         if(volunteer.toString() === request.volunteerId.toString()) {
           throw new httpErrors(409, '__ERROR__ duplicate volunteer.');

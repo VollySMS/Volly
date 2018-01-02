@@ -48,7 +48,7 @@ volunteerMockFactory.createWithCompany = () => {
     .catch(console.log);
 };
 
-volunteerMockFactory.createAndAdd = () => {
+volunteerMockFactory.createAndAddPending = () => {
   let mock = {};
   return volunteerMockFactory.createWithCompany()
     .then(mockData => {
@@ -59,6 +59,25 @@ volunteerMockFactory.createAndAdd = () => {
     })
     .then(() => {
       mock.volunteer.pendingCompanies.push(mock.company._id);
+      return mock.volunteer.save();
+    })
+    .then(() => mock)
+    .catch(console.log);
+};
+
+volunteerMockFactory.createAndAddActive = () => {
+  let mock = {};
+  return volunteerMockFactory.createAndAddPending()
+    .then(mockData => {
+      mock = mockData;
+
+      mock.company.pendingVolunteers = [];
+      mock.company.activeVolunteers.push(mock.volunteer._id);
+      return mock.company.save();
+    })
+    .then(() => {
+      mock.volunteer.pendingCompanies = [];
+      mock.volunteer.activeCompanies.push(mock.company._id);
       return mock.volunteer.save();
     })
     .then(() => mock)

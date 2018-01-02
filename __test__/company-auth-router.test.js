@@ -157,7 +157,7 @@ describe('company-auth-router.js', () => {
     describe('GET /company/pending', () => {
       test('should return a 200 if pending volunteers are successfully found', () => { // TODO: make this test better once we send back more detailed info
         let mock = {};
-        return volunteerMockFactory.createAndAdd()
+        return volunteerMockFactory.createAndAddPending()
           .then(mockData => {
             mock = mockData;
             return superagent.get(`${process.env.API_URL}/company/pending`)
@@ -175,7 +175,7 @@ describe('company-auth-router.js', () => {
     describe('PUT /company/approve', () => {
       test('should return object with active and pending volunteers arrays', () => { // TODO: might need to fix this test when more detailed info is returned
         let mock = {};
-        return volunteerMockFactory.createAndAdd()
+        return volunteerMockFactory.createAndAddPending()
           .then(mockData => {
             mock = mockData;            
             return superagent.put(`${process.env.API_URL}/company/approve`)

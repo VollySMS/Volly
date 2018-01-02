@@ -196,7 +196,22 @@ describe('volunteer-auth-router.js', () => {
     });
 
     test('applying to the same company while still pending should return a 409', () => {
-      return volunteerMockFactory.createAndAdd()
+      return volunteerMockFactory.createAndAddPending()
+        .then(mock => {
+          return superagent.put(`${process.env.API_URL}/volunteer/apply`)
+            .set('Authorization', `Bearer ${mock.volunteerToken}`)
+            .send({
+              companyId: mock.company._id,
+            });
+        })
+        .then(Promise.reject)
+        .catch(response => {
+          expect(response.status).toEqual(409);
+        });
+    });
+
+    test('applying to the same company while active should return a 409', () => {
+      return volunteerMockFactory.createAndAddActive()
         .then(mock => {
           return superagent.put(`${process.env.API_URL}/volunteer/apply`)
             .set('Authorization', `Bearer ${mock.volunteerToken}`)
@@ -288,7 +303,7 @@ describe('volunteer-auth-router.js', () => {
   describe('PUT /volunteer/leave', () => {
     test('should return a 200 if pending company is successfully updated', () => { // TODO: improve this test once more data returned
       let mock = {};
-      return volunteerMockFactory.createAndAdd()
+      return volunteerMockFactory.createAndAddPending()
         .then(mockData => {
           mock = mockData;
           expect(mock.company.pendingVolunteers[0].toString()).toEqual(mock.volunteer._id.toString());
