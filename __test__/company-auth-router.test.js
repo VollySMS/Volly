@@ -23,6 +23,7 @@ describe('company-auth-router.js', () => {
           password: faker.internet.password(),
           email: faker.internet.email(),
           phoneNumber: faker.phone.phoneNumber(),
+          website: faker.internet.url(),    
         })
         .then(response => {
           expect(response.status).toEqual(200);
@@ -54,6 +55,7 @@ describe('company-auth-router.js', () => {
               password: faker.internet.password(),
               email: faker.internet.email(),
               phoneNumber: faker.phone.phoneNumber(),
+              website: faker.internet.url(),    
             });
         })
         .then(Promise.reject)
@@ -69,6 +71,7 @@ describe('company-auth-router.js', () => {
           password: faker.internet.password(),
           email: faker.internet.email(),
           phoneNumber: faker.phone.phoneNumber(),
+          website: faker.internet.url(),    
         })
         .then(Promise.reject)
         .catch(response => {

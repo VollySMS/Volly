@@ -79,12 +79,12 @@ The first step for a company is to sign up.
 
 Send a JSON object containing the following properties (all are Strings):
 
-`companyName`, `password`, `email`, and `phoneNumber`
+`companyName`, `password`, `email`, `phoneNumber` and `website`
 
 Upon successfully signing up, you will receive a JSON Web Token used for authenticating future requests.
 
 ```
-echo '{"companyName": "bigBobsCharityHouse", "password": "bigBobsSuperSecretPassword", "phoneNumber": "(216) 555-1234", "email": "bigBob@bbch.org"}' | http POST https://volly-sms.herokuapp.com/company/signup
+echo '{"companyName": "bigBobsCharityHouse", "password": "bigBobsSuperSecretPassword", "phoneNumber": "(216) 555-1234", "email": "bigBob@bbch.org", "website": "www.companywebsite.org"}' | http POST https://volly-sms.herokuapp.com/company/signup
 
 // Response:
 //
