@@ -21,6 +21,9 @@ volunteerAuthRouter.post('/volunteer/signup', jsonParser, (request, response, ne
     .catch(next);
 });
 
+// TODO: Add a GET route to get an array of all companies that they could apply for.
+
+// TODO: change this to PUT route
 volunteerAuthRouter.post('/volunteer/apply', bearerAuthVolunteer, jsonParser, (request, response, next) => {
   if(!request.body.companyId)
     return next(new httpErrors(400, '__ERROR__ <companyId> is required to apply.'));
@@ -46,11 +49,12 @@ volunteerAuthRouter.post('/volunteer/apply', bearerAuthVolunteer, jsonParser, (r
       volunteer.pendingCompanies.push(request.body.companyId);
       return volunteer.save();
     })
-    .then(() => response.sendStatus(200))
+    .then(() => response.sendStatus(200)) // TODO: send back arrays instead
     .catch(next);
 
 });
 
+// TODO: move this get route up (underneath signup)
 volunteerAuthRouter.get('/volunteer/login', basicAuthVolunteer, (request, response, next) => {
   if(!request.volunteer) {
     return next(new httpErrors(404, '__ERROR__ volunteer not found'));
@@ -85,6 +89,6 @@ volunteerAuthRouter.put('/volunteer/leave', bearerAuthVolunteer, jsonParser, (re
       request.volunteer.pendingCompanies = request.volunteer.pendingCompanies.filter(companyId => companyId.toString() !== request.body.companyId.toString());
       return request.volunteer.save();
     })
-    .then(volunteer => response.json({volunteer}))
+    .then(volunteer => response.json({volunteer})) // TODO: don't send the entire volunteer back, just send back the arrays (with detailed info about the company)
     .catch(next);
 });

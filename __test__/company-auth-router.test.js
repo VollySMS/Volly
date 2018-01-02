@@ -1,9 +1,11 @@
 'use strict';
 
 require('./lib/setup');
+
 const faker = require('faker');
-const server = require('../lib/server');
 const superagent = require('superagent');
+
+const server = require('../lib/server');
 const Volunteer = require('../model/volunteer');
 const companyMockFactory = require('./lib/company-mock-factory');
 const volunteerMockFactory = require('./lib/volunteer-mock-factory');
@@ -60,7 +62,7 @@ describe('company-auth-router.js', () => {
         });
     });
 
-    test('should respond with a 404 status if a bad enpoint is hit', () => {
+    test('should respond with a 404 status if a bad endpoint is hit', () => {
       return superagent.post(`${process.env.API_URL}/bad-path`)
         .send({
           companyName: faker.company.companyName(),
@@ -85,7 +87,7 @@ describe('company-auth-router.js', () => {
           })
           .then( response => {
             expect(response.status).toEqual(200);
-            expect(response.body).toBeTruthy();
+            expect(response.body).toBeTruthy(); // TODO: Should this be response.body.token???
           });
       });
 
@@ -150,7 +152,7 @@ describe('company-auth-router.js', () => {
     });
 
     describe('GET /company/pending', () => {
-      test('should return a 200 if pending volunteers are successfully found', () => {
+      test('should return a 200 if pending volunteers are successfully found', () => { // TODO: make this test better once we send back more detailed info
         let mock = {};
         return volunteerMockFactory.createAndAdd()
           .then(mockData => {
@@ -168,7 +170,7 @@ describe('company-auth-router.js', () => {
 
   describe('PUT', () => {
     describe('PUT /company/approve', () => {
-      test('should return object with active and pending volunteers arrays', () => {
+      test('should return object with active and pending volunteers arrays', () => { // TODO: might need to fix this test when more detailed info is returned
         let mock = {};
         return volunteerMockFactory.createAndAdd()
           .then(mockData => {
@@ -187,9 +189,7 @@ describe('company-auth-router.js', () => {
             expect(volunteer.pendingCompanies.length).toEqual(0);
             expect(volunteer.activeCompanies[0].toString()).toEqual(mock.company._id.toString());
           });
-          
       });
     });
   });
-
 });

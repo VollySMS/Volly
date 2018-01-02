@@ -2,10 +2,10 @@
 
 require('./lib/setup');
 const faker = require('faker');
-const server = require('../lib/server');
 const superagent = require('superagent');
-const volunteerMockFactory = require('./lib/volunteer-mock-factory');
 
+const server = require('../lib/server');
+const volunteerMockFactory = require('./lib/volunteer-mock-factory');
 const Company = require('../model/company');
 const Volunteer = require('../model/volunteer');
 
@@ -63,7 +63,7 @@ describe('volunteer-auth-router.js', () => {
         });
     });
 
-    test('should respond with a 404 status if a bad enpoint is hit', () => {
+    test('should respond with a 404 status if a bad endpoint is hit', () => {
       return superagent.post(`${process.env.API_URL}/bad-path`)
         .send({
           name: faker.name.firstName() + ' ' + faker.name.lastName(),
@@ -152,11 +152,11 @@ describe('volunteer-auth-router.js', () => {
     });
   });
 
-  describe('POST /volunteer/apply', () => {
+  describe('POST /volunteer/apply', () => { // TODO: this should be a PUT route
     afterEach(volunteerMockFactory.remove);
 
     test('applying to company should respond with a 200 status', () => {
-      return volunteerMockFactory.createWithCompany()
+      return volunteerMockFactory.createWithCompany() // TODO: improve this test once more data returned
         .then(mock => {
           return superagent.post(`${process.env.API_URL}/volunteer/apply`)
             .set('Authorization', `Bearer ${mock.volunteerToken}`)
@@ -283,7 +283,7 @@ describe('volunteer-auth-router.js', () => {
   });
 
   describe('PUT /volunteer/leave', () => {
-    test('should return a 200 if pending company is successfully updated', () => {
+    test('should return a 200 if pending company is successfully updated', () => { // TODO: improve this test once more data returned
       let mock = {};
       return volunteerMockFactory.createAndAdd()
         .then(mockData => {

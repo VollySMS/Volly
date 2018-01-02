@@ -6,7 +6,7 @@ const httpErrors = require('http-errors');
 const jsonWebToken = require('jsonwebtoken');
 const mongoose = require('mongoose');
 
-const companySchema = mongoose.Schema({
+const companySchema = mongoose.Schema({ // TODO: add website property
   passwordHash: {
     type: String,
     required: true,
@@ -43,8 +43,6 @@ const companySchema = mongoose.Schema({
 },
 {
   usePushEach : true,
-
-  //TODO:events, methody stuff
 });
 
 companySchema.methods.verifyPassword = function(password) {
