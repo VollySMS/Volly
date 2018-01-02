@@ -9,13 +9,14 @@ const volunteerMockFactory = module.exports = {};
 volunteerMockFactory.create = () => {
   let mock = {};
   mock.request = {
-    name: faker.name.firstName() + ' ' + faker.name.lastName(),
+    firstName: faker.name.firstName(),
+    lastName: faker.name.lastName(),
     userName: faker.company.companyName(),
     password: faker.internet.password(),
     email: faker.internet.email(),
     phoneNumber: faker.phone.phoneNumber(),
   };
-  return Volunteer.create(mock.request.name, mock.request.userName, mock.request.password, mock.request.email, mock.request.phoneNumber)
+  return Volunteer.create(mock.request.firstName, mock.request.lastName, mock.request.userName, mock.request.password, mock.request.email, mock.request.phoneNumber)
     .then(volunteer => {
       mock.volunteer = volunteer;
       return volunteer.createToken();

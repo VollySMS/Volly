@@ -11,11 +11,11 @@ const bearerAuthVolunteer = require('../lib/bearer-auth-middleware')(Volunteer);
 const volunteerAuthRouter = module.exports = new Router();
 
 volunteerAuthRouter.post('/volunteer/signup', jsonParser, (request, response, next) => {
-  if(!request.body.name || !request.body.userName || !request.body.password || !request.body.email || !request.body.phoneNumber) {
-    return next(new httpErrors(400, '__ERROR__ <name>, <userName>, <email>, <phoneNumber>, and <password> are required to sign up.'));
+  if(!request.body.firstName || !request.body.lastName || !request.body.userName || !request.body.password || !request.body.email || !request.body.phoneNumber) {
+    return next(new httpErrors(400, '__ERROR__ <firstName>, <lastName>, <userName>, <email>, <phoneNumber>, and <password> are required to sign up.'));
   }
 
-  return Volunteer.create(request.body.name, request.body.userName, request.body.password, request.body.email, request.body.phoneNumber)
+  return Volunteer.create(request.body.firstName, request.body.lastName, request.body.userName, request.body.password, request.body.email, request.body.phoneNumber)
     .then(volunteer => volunteer.createToken())
     .then(token => response.json({token}))
     .catch(next);

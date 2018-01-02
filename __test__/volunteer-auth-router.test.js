@@ -19,7 +19,8 @@ describe('volunteer-auth-router.js', () => {
     test('creating an account should respond with a 200 status and a token', () => {
       return superagent.post(`${process.env.API_URL}/volunteer/signup`)
         .send({
-          name: faker.name.firstName() + ' ' + faker.name.lastName(),
+          firstName: faker.name.firstName(),
+          lastName: faker.name.lastName(),
           userName: faker.company.companyName(),
           password: faker.internet.password(),
           email: faker.internet.email(),
@@ -50,7 +51,8 @@ describe('volunteer-auth-router.js', () => {
           volunteer = mock.volunteer;
           return superagent.post(`${process.env.API_URL}/volunteer/signup`)
             .send({
-              name: faker.name.firstName() + ' ' + faker.name.lastName(),
+              firstName: faker.name.firstName(),
+              lastName: faker.name.lastName(),
               userName: volunteer.userName,
               password: faker.internet.password(),
               email: faker.internet.email(),
@@ -66,7 +68,8 @@ describe('volunteer-auth-router.js', () => {
     test('should respond with a 404 status if a bad endpoint is hit', () => {
       return superagent.post(`${process.env.API_URL}/bad-path`)
         .send({
-          name: faker.name.firstName() + ' ' + faker.name.lastName(),
+          firstName: faker.name.firstName(),
+          lastName: faker.name.lastName(),
           userName: faker.company.companyName(),
           password: faker.internet.password(),
           email: faker.internet.email(),
