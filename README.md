@@ -187,13 +187,12 @@ http GET https://volly-sms.herokuapp.com/volunteer/opportunities Authorization:'
 // TODO: fill this in once written
 ```
 
-#### `POST /volunteer/apply`
-TODO: Change this to PUT route
+#### `PUT /volunteer/apply`
 
 Once you've found a company you want to volunteer for, apply to that company by sending an object with the `companyId` as a property. Don't forget to authenticate yourself using jwt-auth and your token.
 
 ```
-echo '{"companyId": "5a4b074914fe45001431b289"}' | http POST https://volly-sms.herokuapp.com/volunteer/apply Authorization:'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlblNlZWQiOiJkNzc2YjhkNmZiZTkwNTg3MDMwYjkzMjhjYmYwODlmZmU3ODJlOTQ5NTg5YTc3MWI5YzIyYzJhYWMxOWVkNzAzNzBkYWE2YmFkZTQ3MjA5ZWM5MmYxZTY3ZDNlMTZjYzc0MzE3MmJhYTE5ZDcyMjdjMGE0MDhiMGZjNTRmZGUyOSIsImlhdCI6MTUxNDg2ODEyOX0.fn9K2zzCLlLYORPzgQv7htyGAfrPqvHJaJaeNtXUeDs'
+echo '{"companyId": "5a4b074914fe45001431b289"}' | http PUT https://volly-sms.herokuapp.com/volunteer/apply Authorization:'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlblNlZWQiOiJkNzc2YjhkNmZiZTkwNTg3MDMwYjkzMjhjYmYwODlmZmU3ODJlOTQ5NTg5YTc3MWI5YzIyYzJhYWMxOWVkNzAzNzBkYWE2YmFkZTQ3MjA5ZWM5MmYxZTY3ZDNlMTZjYzc0MzE3MmJhYTE5ZDcyMjdjMGE0MDhiMGZjNTRmZGUyOSIsImlhdCI6MTUxNDg2ODEyOX0.fn9K2zzCLlLYORPzgQv7htyGAfrPqvHJaJaeNtXUeDs'
 
 // Response: 200
 ```
