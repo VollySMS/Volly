@@ -152,13 +152,13 @@ describe('volunteer-auth-router.js', () => {
     });
   });
 
-  describe('POST /volunteer/apply', () => { // TODO: this should be a PUT route
+  describe('PUT /volunteer/apply', () => { 
     afterEach(volunteerMockFactory.remove);
 
     test('applying to company should respond with a 200 status', () => {
       return volunteerMockFactory.createWithCompany() // TODO: improve this test once more data returned
         .then(mock => {
-          return superagent.post(`${process.env.API_URL}/volunteer/apply`)
+          return superagent.put(`${process.env.API_URL}/volunteer/apply`)
             .set('Authorization', `Bearer ${mock.volunteerToken}`)
             .send({
               companyId: mock.company._id,
@@ -180,7 +180,7 @@ describe('volunteer-auth-router.js', () => {
     test('should return status code 400 if invalid company id is provided', () => {
       return volunteerMockFactory.createWithCompany()
         .then(mock => {
-          return superagent.post(`${process.env.API_URL}/volunteer/apply`)
+          return superagent.put(`${process.env.API_URL}/volunteer/apply`)
             .set('Authorization', `Bearer ${mock.volunteerToken}`)
             .send({
               invalidId: mock.company._id,
@@ -195,7 +195,7 @@ describe('volunteer-auth-router.js', () => {
     test('applying to the same company while still pending should return a 409', () => {
       return volunteerMockFactory.createAndAdd()
         .then(mock => {
-          return superagent.post(`${process.env.API_URL}/volunteer/apply`)
+          return superagent.put(`${process.env.API_URL}/volunteer/apply`)
             .set('Authorization', `Bearer ${mock.volunteerToken}`)
             .send({
               companyId: mock.company._id,
@@ -210,7 +210,7 @@ describe('volunteer-auth-router.js', () => {
     test('should respond with a 404 status if you apply to a company that cannot be found', () => {
       return volunteerMockFactory.createWithCompany()
         .then(mock => {
-          return superagent.post(`${process.env.API_URL}/volunteer/apply`)
+          return superagent.put(`${process.env.API_URL}/volunteer/apply`)
             .set('Authorization', `Bearer ${mock.volunteerToken}`)
             .send({
               companyId: 'fake-company-id',
@@ -225,7 +225,7 @@ describe('volunteer-auth-router.js', () => {
     test('should respond with a 401 status if you fail to send valid Bearer auth', () => {
       return volunteerMockFactory.createWithCompany()
         .then(mock => {
-          return superagent.post(`${process.env.API_URL}/volunteer/apply`)
+          return superagent.put(`${process.env.API_URL}/volunteer/apply`)
             .set('Authorization', `Bearer bad-auth-token`)
             .send({
               companyId: mock.company._id,
@@ -240,7 +240,7 @@ describe('volunteer-auth-router.js', () => {
     test('should respond with a 400 status if bearer auth is not sent', () => {
       return volunteerMockFactory.createWithCompany()
         .then(mock => {
-          return superagent.post(`${process.env.API_URL}/volunteer/apply`)
+          return superagent.put(`${process.env.API_URL}/volunteer/apply`)
             .send({
               companyId: mock.company._id,
             });
@@ -254,7 +254,7 @@ describe('volunteer-auth-router.js', () => {
     test('should respond with a 400 status if no token is sent with the bearer auth', () => {
       return volunteerMockFactory.createWithCompany()
         .then(mock => {
-          return superagent.post(`${process.env.API_URL}/volunteer/apply`)
+          return superagent.put(`${process.env.API_URL}/volunteer/apply`)
             .set('Authorization', `Bearer`)
             .send({
               companyId: mock.company._id,
@@ -269,7 +269,7 @@ describe('volunteer-auth-router.js', () => {
     test('should respond with a 404 status if no account is found with the given token', () => {
       return volunteerMockFactory.createWithCompany()
         .then(mock => {
-          return superagent.post(`${process.env.API_URL}/volunteer/apply`)
+          return superagent.put(`${process.env.API_URL}/volunteer/apply`)
             .set('Authorization', `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlblNlZWQiOiIzNDBkY2JhOGQyOGY3OTUzZjcxOGM0NzQ0NDY3ZjRjMTNkMTc5YjQ3MTQ4OWNjZjA0ZThkODJhN2I4MzdiZWRjZjEwNTRiODgwMDFjNjEwYzRmYzJiYzVmMjI2NGU2OTcyMGYwZjY0OTMwYzNiYjVlYmFiNTJiMDgwYTg4ZmJkYiIsImlhdCI6MTUxNDc0OTU5N30.14ukuDv4Zo6Ch29UW1Qa0RKXdOgSaRx9jiXIRJA35mI`)
             .send({
               companyId: mock.company._id,
