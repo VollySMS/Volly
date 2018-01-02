@@ -34,7 +34,7 @@ companyAuthRouter.get('/company/pending', bearerAuthCompany, (request, response,
   if(!request.company) 
     return next(new httpErrors(404, '__ERROR__ company not found'));
 
-  return response.json({pendingVolunteers: request.company.pendingVolunteers});
+  return response.json({pendingVolunteers: request.company.pendingVolunteers}); // TODO: Instead of just sending the volunteerIDs, send back objects containing the volunteer's name and contact info in addition to their ids
 });
 
 companyAuthRouter.put('/company/approve', bearerAuthCompany, jsonParser, (request, response, next) => {
@@ -55,6 +55,6 @@ companyAuthRouter.put('/company/approve', bearerAuthCompany, jsonParser, (reques
       request.company.pendingVolunteers = request.company.pendingVolunteers.filter(volunteerId => volunteerId.toString() !== volunteer._id.toString());
       return request.company.save();
     })
-    .then(company => response.json({pendingVolunteers: company.pendingVolunteers, activeVolunteers: company.activeVolunteers}))
+    .then(company => response.json({pendingVolunteers: company.pendingVolunteers, activeVolunteers: company.activeVolunteers})) // TODO: same as note above about content to send back
     .catch(next);
 });

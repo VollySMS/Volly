@@ -7,7 +7,7 @@ const jsonWebToken = require('jsonwebtoken');
 const mongoose = require('mongoose');
 
 const volunteerSchema = mongoose.Schema({
-  name: {
+  name: { // TODO: change to firstName and lastName
     type: String,
     required: true,
   },
@@ -50,17 +50,16 @@ const volunteerSchema = mongoose.Schema({
     type : mongoose.Schema.Types.ObjectId,
     ref : 'company',
   }],
-},{
+},
+{
   usePushEach : true,
-
 });
 
 volunteerSchema.methods.verifyPassword = function(password) {
   return bcrypt.compare(password, this.passwordHash)
     .then(response => {
-      if(!response) {
+      if(!response)
         throw new httpErrors(401, '__AUTH__ unauthorized');
-      }
       return this;
     });
 };
