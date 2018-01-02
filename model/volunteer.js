@@ -7,7 +7,12 @@ const jsonWebToken = require('jsonwebtoken');
 const mongoose = require('mongoose');
 
 const volunteerSchema = mongoose.Schema({
-  name: { // TODO: change to firstName and lastName
+  firstName: {
+    type: String,
+    required: true,
+  },
+
+  lastName: {
     type: String,
     required: true,
   },
@@ -76,13 +81,14 @@ volunteerSchema.methods.createToken = function() {
 
 const Volunteer = module.exports = mongoose.model('volunteer', volunteerSchema);
 
-Volunteer.create = (name, userName, password, email, phoneNumber) => {
+Volunteer.create = (firstName, lastName, userName, password, email, phoneNumber) => {
   const HASH_SALT_ROUNDS = 8;
   return bcrypt.hash(password, HASH_SALT_ROUNDS)
     .then(passwordHash => {
       let tokenSeed = crypto.randomBytes(64).toString('hex');
       return new Volunteer({
-        name,
+        firstName,
+        lastName,
         userName,
         passwordHash,
         email,
