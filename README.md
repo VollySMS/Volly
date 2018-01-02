@@ -148,12 +148,12 @@ The first step for a volunteer is to sign up.
 
 Send a JSON object containing the following properties (all are Strings):
 
-`userName`, `password`, `name`, `email`, and `phoneNumber`
+`firstName`, `lastName`, `userName`, `password`, `email`, and `phoneNumber`
 
 Upon successfully signing up, you will receive a JSON Web Token used for authenticating future requests.
 
 ```
-echo '{"userName": "sallyVolunteer98", "password": "goodThings123", "name": "Sally Johnson", "phoneNumber": "(216) 555-1111", "email": "goodPerson@gmail.com"}' | http POST https://volly-sms.herokuapp.com/volunteer/signup
+echo '{"firstName": "Sally", "lastName": "Johnson", "userName": "sallyVolunteer98", "password": "goodThings123", "phoneNumber": "(216) 555-1111", "email": "goodPerson@gmail.com"}' | http POST https://volly-sms.herokuapp.com/volunteer/signup
 // Response:
 //
 // {
