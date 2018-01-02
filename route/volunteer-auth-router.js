@@ -39,13 +39,9 @@ volunteerAuthRouter.put('/volunteer/apply', bearerAuthVolunteer, jsonParser, (re
 
   return Company.findById(request.body.companyId)
     .then(company => {
-      if(!company)
-        throw new httpErrors(404, '__ERROR__ company not found.');
-
       for(let volunteer of company.activeVolunteers) {
-        if(volunteer.toString() === request.volunteerId.toString()) {
+        if(volunteer.toString() === request.volunteerId.toString()) 
           throw new httpErrors(409, '__ERROR__ duplicate volunteer.');
-        }
       }
 
       for(let volunteer of company.pendingVolunteers) {
@@ -59,24 +55,21 @@ volunteerAuthRouter.put('/volunteer/apply', bearerAuthVolunteer, jsonParser, (re
     })
     .then(() => Volunteer.findById(request.volunteerId))
     .then(volunteer => {
-      if(!volunteer)
-        throw new httpErrors(404, '__ERROR__ volunteer not found.');
       volunteer.pendingCompanies.push(request.body.companyId);
       return volunteer.save();
     })
-    .then(() => response.sendStatus(200)) // TODO: send back arrays instead
+    .then(volunteer => {
+      return Volunteer.findById(volunteer._id)
+        .populate('pendingCompanies')
+        .populate('activeCompanies');
+    })
+    .then(volunteer => response.json(volunteer.getCensoredCompanies()))
     .catch(next);
-
 });
 
 volunteerAuthRouter.put('/volunteer/leave', bearerAuthVolunteer, jsonParser, (request, response, next) => {
-  if(!request.volunteer) {
-    return next(new httpErrors(404, '__ERROR__ volunteer not found'));
-  }
-
-  if(!request.body.companyId){
+  if(!request.body.companyId)
     return next(new httpErrors(400, '__ERROR__ company id is required'));
-  }
 
   return Company.findById(request.body.companyId)
     .then(company => {
@@ -93,6 +86,11 @@ volunteerAuthRouter.put('/volunteer/leave', bearerAuthVolunteer, jsonParser, (re
       request.volunteer.pendingCompanies = request.volunteer.pendingCompanies.filter(companyId => companyId.toString() !== request.body.companyId.toString());
       return request.volunteer.save();
     })
-    .then(volunteer => response.json({volunteer})) // TODO: don't send the entire volunteer back, just send back the arrays (with detailed info about the company)
+    .then(volunteer => {
+      return Volunteer.findById(volunteer._id)
+        .populate('pendingCompanies')
+        .populate('activeCompanies');
+    })
+    .then(volunteer => response.json(volunteer.getCensoredCompanies()))
     .catch(next);
 });

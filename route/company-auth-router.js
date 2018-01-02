@@ -22,25 +22,26 @@ companyAuthRouter.post('/company/signup', jsonParser, (request, response, next) 
 });
 
 companyAuthRouter.get('/company/login', basicAuthCompany, (request, response, next) => {
-  if(!request.company) 
-    return next(new httpErrors(404, '__ERROR__ company not found'));
-
   return request.company.createToken()
     .then(token => response.json({token}))
     .catch(next);
 });
 
 companyAuthRouter.get('/company/pending', bearerAuthCompany, (request, response, next) => {
-  if(!request.company) 
-    return next(new httpErrors(404, '__ERROR__ company not found'));
+  return Company.findById(request.company._id)
+    .populate('pendingVolunteers')
+    .then(company => response.json({pendingVolunteers: company.getCensoredVolunteers().pendingVolunteers}))
+    .catch(next);
+});
 
-  return response.json({pendingVolunteers: request.company.pendingVolunteers}); // TODO: Instead of just sending the volunteerIDs, send back objects containing the volunteer's name and contact info in addition to their ids
+companyAuthRouter.get('/company/active', bearerAuthCompany, (request, response, next) => {
+  return Company.findById(request.company._id)
+    .populate('activeVolunteers')
+    .then(company => response.json({activeVolunteers: company.getCensoredVolunteers().activeVolunteers}))
+    .catch(next);
 });
 
 companyAuthRouter.put('/company/approve', bearerAuthCompany, jsonParser, (request, response, next) => {
-  if(!request.company) 
-    return next(new httpErrors(404, '__ERROR__ company not found'));
-
   return Volunteer.findById(request.body.volunteerId)
     .then(volunteer => {
       if(!volunteer) 
@@ -55,6 +56,11 @@ companyAuthRouter.put('/company/approve', bearerAuthCompany, jsonParser, (reques
       request.company.pendingVolunteers = request.company.pendingVolunteers.filter(volunteerId => volunteerId.toString() !== volunteer._id.toString());
       return request.company.save();
     })
-    .then(company => response.json({pendingVolunteers: company.pendingVolunteers, activeVolunteers: company.activeVolunteers})) // TODO: same as note above about content to send back
+    .then(company => {
+      return Company.findById(company._id)
+        .populate('pendingVolunteers')
+        .populate('activeVolunteers');        
+    })
+    .then(company => response.json(company.getCensoredVolunteers()))
     .catch(next);
 });

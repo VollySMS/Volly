@@ -70,6 +70,23 @@ companySchema.methods.createToken = function() {
     });
 };
 
+companySchema.methods._censorVolunteers = (array) => {
+  return array.map(pendingVolunteers => ({
+    volunteerId: pendingVolunteers._id,
+    firstName: pendingVolunteers.firstName,
+    lastName: pendingVolunteers.lastName,
+    phoneNumber: pendingVolunteers.phoneNumber,
+    email: pendingVolunteers.email,
+  }));
+};
+
+companySchema.methods.getCensoredVolunteers = function() {
+  return {
+    pendingVolunteers: this._censorVolunteers(this.pendingVolunteers), 
+    activeVolunteers: this._censorVolunteers(this.activeVolunteers),
+  };
+};
+
 const Company = module.exports = mongoose.model('company', companySchema);
 
 Company.create = (companyName, password, email, phoneNumber, website) => {

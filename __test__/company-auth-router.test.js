@@ -90,7 +90,7 @@ describe('company-auth-router.js', () => {
           })
           .then( response => {
             expect(response.status).toEqual(200);
-            expect(response.body).toBeTruthy(); // TODO: Should this be response.body.token???
+            expect(response.body.token).toBeTruthy(); 
           });
       });
 
@@ -155,7 +155,7 @@ describe('company-auth-router.js', () => {
     });
 
     describe('GET /company/pending', () => {
-      test('should return a 200 if pending volunteers are successfully found', () => { // TODO: make this test better once we send back more detailed info
+      test('should return a 200 if pending volunteers are successfully found', () => { 
         let mock = {};
         return volunteerMockFactory.createAndAddPending()
           .then(mockData => {
@@ -164,7 +164,35 @@ describe('company-auth-router.js', () => {
               .set('Authorization', `Bearer ${mock.companyToken}`);
           })
           .then(response => {
-            expect(response.body.pendingVolunteers[0].toString()).toEqual(mock.volunteer._id.toString());
+            expect(response.body.pendingVolunteers[0]).toEqual({
+              volunteerId: mock.volunteer._id.toString(),
+              firstName: mock.volunteer.firstName,
+              lastName: mock.volunteer.lastName,
+              phoneNumber: mock.volunteer.phoneNumber,
+              email: mock.volunteer.email,
+            });
+            expect(response.status).toEqual(200);
+          });
+      });
+    });
+
+    describe('GET /company/active', () => {
+      test('should return a 200 if active volunteers are successfully found', () => { 
+        let mock = {};
+        return volunteerMockFactory.createAndAddActive()
+          .then(mockData => {
+            mock = mockData;
+            return superagent.get(`${process.env.API_URL}/company/active`)
+              .set('Authorization', `Bearer ${mock.companyToken}`);
+          })
+          .then(response => {
+            expect(response.body.activeVolunteers[0]).toEqual({
+              volunteerId: mock.volunteer._id.toString(),
+              firstName: mock.volunteer.firstName,
+              lastName: mock.volunteer.lastName,
+              phoneNumber: mock.volunteer.phoneNumber,
+              email: mock.volunteer.email,
+            });
             expect(response.status).toEqual(200);
           });
       });
@@ -173,7 +201,7 @@ describe('company-auth-router.js', () => {
 
   describe('PUT', () => {
     describe('PUT /company/approve', () => {
-      test('should return object with active and pending volunteers arrays', () => { // TODO: might need to fix this test when more detailed info is returned
+      test('should return object with active and pending volunteers arrays', () => { 
         let mock = {};
         return volunteerMockFactory.createAndAddPending()
           .then(mockData => {
@@ -184,13 +212,34 @@ describe('company-auth-router.js', () => {
           })
           .then(response => {
             expect(response.status).toEqual(200);
+            expect(response.body.activeVolunteers[0]).toEqual({
+              volunteerId: mock.volunteer._id.toString(),
+              firstName: mock.volunteer.firstName,
+              lastName: mock.volunteer.lastName,
+              phoneNumber: mock.volunteer.phoneNumber,
+              email: mock.volunteer.email,
+            });
             expect(response.body.pendingVolunteers.length).toEqual(0);
-            expect(response.body.activeVolunteers[0].toString()).toEqual(mock.volunteer._id.toString());
             return Volunteer.findById(mock.volunteer._id);
           })
           .then(volunteer => {
             expect(volunteer.pendingCompanies.length).toEqual(0);
-            expect(volunteer.activeCompanies[0].toString()).toEqual(mock.company._id.toString());
+            expect(volunteer.activeCompanies[0]).toEqual(mock.company._id);
+          });
+      });
+
+      test('should return 404 if there is no pending volunteer with provided ID', () => { 
+        let mock = {};
+        return volunteerMockFactory.createAndAddPending()
+          .then(mockData => {
+            mock = mockData;            
+            return superagent.put(`${process.env.API_URL}/company/approve`)
+              .set('Authorization', `Bearer ${mock.companyToken}`)
+              .send({volunteerId: '5a4bc01dcf40590014e07350'});
+          })
+          .then(Promise.reject)
+          .catch(response => {
+            expect(response.status).toEqual(404);
           });
       });
     });
