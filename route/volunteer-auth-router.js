@@ -22,16 +22,24 @@ volunteerAuthRouter.post('/volunteer/signup', jsonParser, (request, response, ne
 });
 
 volunteerAuthRouter.get('/volunteer/login', basicAuthVolunteer, (request, response, next) => {
-  if(!request.volunteer) {
-    return next(new httpErrors(404, '__ERROR__ volunteer not found'));
-  }
-  
   return request.volunteer.createToken()
     .then(token => response.json({token}))
     .catch(next);
 });
 
-// TODO: Add a GET route to get an array of all companies that they could apply for.
+volunteerAuthRouter.get('/volunteer/opportunities', bearerAuthVolunteer, (request, response, next) => {
+  return Company.find({})
+    .then(companies => response.json({
+      companies: companies.map(company => ({
+        companyId: company._id,
+        companyName: company.companyName,
+        phoneNumber: company.phoneNumber,
+        email: company.email,
+        website: company.website,      
+      })),
+    }))
+    .catch(next);
+});
 
 volunteerAuthRouter.put('/volunteer/apply', bearerAuthVolunteer, jsonParser, (request, response, next) => {
   if(!request.body.companyId)

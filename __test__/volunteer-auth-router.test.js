@@ -158,6 +158,28 @@ describe('volunteer-auth-router.js', () => {
           });
       });
     });
+
+    describe('GET /volunteer/opportunities', () => {
+      test('should respond with array of companies to apply for', () => {
+        let mock = {};
+        return volunteerMockFactory.createWithCompany() 
+          .then(mockData => {
+            mock = mockData;
+            return superagent.get(`${process.env.API_URL}/volunteer/opportunities`)
+              .set('Authorization', `Bearer ${mock.volunteerToken}`)          
+          })
+          .then(response => {
+            expect(response.status).toEqual(200);
+            expect(response.body.companies[0]).toEqual({
+              companyId: mock.company._id.toString(),
+              companyName: mock.company.companyName,
+              phoneNumber: mock.company.phoneNumber,
+              email: mock.company.email,
+              website: mock.company.website,
+            });
+          });     
+      });
+    });
   });
   
 
@@ -366,6 +388,33 @@ describe('volunteer-auth-router.js', () => {
           .then(company => {
             expect(company.pendingVolunteers.length).toEqual(0);
             expect(company.activeVolunteers.length).toEqual(0);
+          });
+      });
+
+      test('should return a 400 if company ID is missing', () => { 
+        return volunteerMockFactory.createAndAddPending()
+          .then(mock => {
+            return superagent.put(`${process.env.API_URL}/volunteer/leave`)
+              .set('Authorization', `Bearer ${mock.volunteerToken}`);
+          })
+          .then(Promise.reject)
+          .catch(response => {
+            expect(response.status).toEqual(400);
+          });
+      });
+
+      test('should return a 404 if no company with provided ID is found', () => { 
+        return volunteerMockFactory.createAndAddPending()
+          .then(mock => {
+            return superagent.put(`${process.env.API_URL}/volunteer/leave`)
+              .set('Authorization', `Bearer ${mock.volunteerToken}`)
+              .send({
+                companyId: '5a4bbf86cf40590014e0734f',
+              });
+          })
+          .then(Promise.reject)
+          .catch(response => {
+            expect(response.status).toEqual(404);
           });
       });
     });
