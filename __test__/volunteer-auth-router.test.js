@@ -228,9 +228,60 @@ describe('volunteer-auth-router.js', () => {
   
 
   describe('PUT', () => {
+    afterEach(volunteerMockFactory.remove);
+    describe('PUT /volunteer/update', () => {
+      test('should return object with updated volunteer information', () => {
+        let newData = null;
+        return volunteerMockFactory.create()
+          .then(mock => {
+            newData = {
+              firstName: faker.name.firstName(),
+              lastName: faker.name.lastName(),
+              userName: faker.company.companyName(),
+              password: faker.internet.password(),
+              email: faker.internet.email(),
+              phoneNumber: faker.phone.phoneNumber(),
+            };
+            return superagent.put(`${process.env.API_URL}/volunteer/update`)
+              .set('Authorization', `Bearer ${mock.token}`)
+              .send(newData);
+          })
+          .then(response => {            
+            expect(response.body.userName).toEqual(newData.userName);
+            expect(response.body.email).toEqual(newData.email);
+            expect(response.body.phoneNumber).toEqual(newData.phoneNumber);
+            expect(response.body.firstName).toEqual(newData.firstName);
+            expect(response.body.lastName).toEqual(newData.lastName);
+            expect(response.body.token).toBeTruthy();
+            expect(response.status).toEqual(200);
+          });
+      }); 
+      test('if userName or password is not updated, there should not be a new token', () => {
+        return volunteerMockFactory.create()
+          .then(mock => {
+            return superagent.put(`${process.env.API_URL}/volunteer/update`)
+              .set('Authorization', `Bearer ${mock.token}`)
+              .send({email: faker.internet.email()});
+          })
+          .then(response => {            
+            expect(response.body.token).toBeFalsy();
+            expect(response.status).toEqual(200);
+          });
+      }); 
+      test('if no valid property is sent, 400 status code is returned', () => {
+        return volunteerMockFactory.create()
+          .then(mock => {
+            return superagent.put(`${process.env.API_URL}/volunteer/update`)
+              .set('Authorization', `Bearer ${mock.token}`);
+          })
+          .then(Promise.reject)
+          .catch(response => {            
+            expect(response.status).toEqual(400);
+          });
+      }); 
+    });
+
     describe('PUT /volunteer/apply', () => { 
-      afterEach(volunteerMockFactory.remove);
-  
       test('applying to company should respond with a 200 status', () => {
         return volunteerMockFactory.createWithCompany() 
           .then(mock => {

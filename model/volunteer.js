@@ -69,6 +69,15 @@ volunteerSchema.methods.verifyPassword = function(password) {
     });
 };
 
+volunteerSchema.methods.changePassword = function(password) {
+  const HASH_SALT_ROUNDS = 8;
+  return bcrypt.hash(password, HASH_SALT_ROUNDS)
+    .then(passwordHash => {
+      this.passwordHash = passwordHash;
+      return this.save();
+    });
+};
+
 volunteerSchema.methods.createToken = function() {
   this.tokenSeed = crypto.randomBytes(64).toString('hex');
   return this.save()

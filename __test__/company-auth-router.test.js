@@ -238,6 +238,17 @@ describe('company-auth-router.js', () => {
             expect(response.status).toEqual(200);
           });
       }); 
+      test('if no valid property is sent, 400 status code is returned', () => {
+        return companyMockFactory.create()
+          .then(mock => {
+            return superagent.put(`${process.env.API_URL}/company/update`)
+              .set('Authorization', `Bearer ${mock.token}`);
+          })
+          .then(Promise.reject)
+          .catch(response => {            
+            expect(response.status).toEqual(400);
+          });
+      }); 
     });
 
     describe('PUT /company/approve', () => {
