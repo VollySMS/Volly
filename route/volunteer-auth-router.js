@@ -116,3 +116,28 @@ volunteerAuthRouter.put('/volunteer/leave', bearerAuthVolunteer, jsonParser, (re
     .then(volunteer => response.json(volunteer.getCensoredCompanies()))
     .catch(next);
 });
+
+volunteerAuthRouter.delete('/volunteer/delete', bearerAuthVolunteer, (request, response, next) => {
+  let data = {};
+  return Volunteer.findById(request.volunteer._id)
+    .populate('pendingCompanies')
+    .populate('activeCompanies')
+    .then(volunteer => {
+      data.pending = volunteer.pendingCompanies;
+      data.active = volunteer.activeCompanies;
+      
+      return Promise.all(data.pending.map(company => {
+        company.pendingVolunteers = company.pendingVolunteers.filter(volunteerId => volunteerId.toString() !== request.volunteer._id.toString());        
+        return company.save();
+      }));
+    })
+    .then(() => {
+      return Promise.all(data.active.map(company => {
+        company.activeVolunteers = company.activeVolunteers.filter(volunteerId => volunteerId.toString() !== request.volunteer._id.toString());
+        return company.save();
+      }));
+    })
+    .then(() => Volunteer.remove({}))
+    .then(() => response.sendStatus(204))
+    .catch(next);
+});

@@ -463,5 +463,53 @@ describe('volunteer-auth-router.js', () => {
       });
     });
   });
+
+  describe('DELETE', () => {
+    describe('DELETE /volunteer/delete', () => {
+      test('should respond 204 for pendingVolunteers', () => {
+        let mock = null;
+        return volunteerMockFactory.createAndAddPending()
+          .then(mockData => {
+            mock = mockData;
+            expect(mock.company.pendingVolunteers.length).toBeGreaterThan(0);
+            return superagent.delete(`${process.env.API_URL}/volunteer/delete`)
+              .set('Authorization', `Bearer ${mock.volunteerToken}`);
+          })
+          .then(response => {
+            expect(response.status).toEqual(204);
+            return Company.findById(mock.company._id);
+          })
+          .then(company => {
+            expect(company.pendingVolunteers.length).toEqual(0);
+            return Volunteer.findById(mock.volunteer._id);
+          })
+          .then(volunteer => {
+            expect(volunteer).toBeNull();
+          });
+      });
+
+      test('should respond 204 for activeVolunteers', () => {
+        let mock = null;
+        return volunteerMockFactory.createAndAddActive()
+          .then(mockData => {
+            mock = mockData;
+            expect(mock.company.activeVolunteers.length).toBeGreaterThan(0);
+            return superagent.delete(`${process.env.API_URL}/volunteer/delete`)
+              .set('Authorization', `Bearer ${mock.volunteerToken}`);
+          })
+          .then(response => {
+            expect(response.status).toEqual(204);
+            return Company.findById(mock.company._id);
+          })
+          .then(company => {
+            expect(company.activeVolunteers.length).toEqual(0);
+            return Volunteer.findById(mock.volunteer._id);
+          })
+          .then(volunteer => {
+            expect(volunteer).toBeNull();
+          });
+      });
+    });
+  });
   
 });
