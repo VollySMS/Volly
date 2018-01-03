@@ -1,7 +1,7 @@
 
 <h1 align="center">
   <br>
-  <a href="https://volly-sms.herokuapp.com"><img src="https://i.imgur.com/jOnH5uB.png?2" alt="Volly" width="200"></a>
+  <a href="https://volly-sms.herokuapp.com"><img src="https://i.imgur.com/NFMAaQS.png" alt="Volly" width="200"></a>
   <br>
   Volly SMS
   <br>
@@ -16,6 +16,9 @@ Companies and volunteers sign up independently and connect via volunteer-initiat
 ## Build Status
 
 [![Build Status](https://travis-ci.org/VollySMS/Volly.svg?branch=master)](https://travis-ci.org/VollySMS/Volly)
+[![npm](https://img.shields.io/npm/l/express.svg)](https://github.com/VollySMS/Volly/blob/master/LICENSE)
+![Contributions welcome](https://img.shields.io/badge/contributions-welcome-green.svg)
+
 
 
 
@@ -44,6 +47,7 @@ Companies and volunteers sign up independently and connect via volunteer-initiat
 
 - signup
 - login
+- update company information
 - get list of pending volunteers
 - get list of active volunteers
 - approve of pending volunteer
@@ -54,6 +58,7 @@ Companies and volunteers sign up independently and connect via volunteer-initiat
 
 - signup
 - login
+- update voluneer information
 - list all available companies
 - get list of pending companies
 - get list of active companies
