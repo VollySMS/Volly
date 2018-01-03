@@ -1,4 +1,11 @@
-# Volly 
+
+<h1 align="center">
+  <br>
+  <a href="https://volly-sms.herokuapp.com"><img src="https://i.imgur.com/jOnH5uB.png?2" alt="Volly" width="200"></a>
+  <br>
+  Volly SMS
+  <br>
+</h1>
 
 *Volly* is a volunteer management portal that helps non-profits manage their interactions with volunteers.
 
@@ -9,6 +16,8 @@ Companies and volunteers sign up independently and connect via volunteer-initiat
 ## Build Status
 
 [![Build Status](https://travis-ci.org/VollySMS/Volly.svg?branch=master)](https://travis-ci.org/VollySMS/Volly)
+
+
 
 ## Tech / Frameworks
 - node.js
@@ -35,16 +44,22 @@ Companies and volunteers sign up independently and connect via volunteer-initiat
 
 - signup
 - login
-- get pending volunteers
+- get list of pending volunteers
+- get list of active volunteers
 - approve of pending volunteer
+- terminate volunteer
 - TODO: add remaining features
 
 ### Volunteer
 
 - signup
 - login
+- list all available companies
+- get list of pending companies
+- get list of active companies
 - apply to company
 - remove application from company
+- delete volunteer account
 - TODO: add remaining features
 
 ## Tests
@@ -114,14 +129,18 @@ Once you have created your account, users will be able to apply to be a voluntee
 ```
 http GET https://volly-sms.herokuapp.com/company/pending Authorization:'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlblNlZWQiOiIyMzBlZDgwNmY3YWYzY2UzZDVlN2YzYjM5NmJhNDk2ODAxZGNiNDdlYzkyZTA0ZjhiMmUyODg1YjA5ZTg1YzYxYzkzNDJmYTAyNDMzYzQ1YjEyODUxMzYxNGIyMmI3ZGY4MjMzZWJkNjRmMDA2MGU3OGFjMmUzMjNiYzcxMGViMSIsImlhdCI6MTUxNDg2NzE1Nn0.fKcmgdBBje2BPWj05XeXDMVGDD6AL6lWErPpXF0oruA'
 
-// Response:
-// {
-//    "pendingVolunteers": [
-//        "5a4b0d0714fe45001431b28a"
-//    ]
-// }
+{
+    "pendingVolunteers": [
+        {
+            "email": "goodPerson@gmail.com",
+            "firstName": "Sally",
+            "lastName": "Johnson",
+            "phoneNumber": "(216) 555-1111",
+            "volunteerId": "5a4c4f919c22fc0014afe65e"
+        }
+    ]
+}
 ```
-TODO: Change this so that it shows more detailed info about the volunteer rather than just the id.
 
 #### `PUT /company/approve`
 
@@ -195,9 +214,19 @@ Once you've found a company you want to volunteer for, apply to that company by 
 echo '{"companyId": "5a4b074914fe45001431b289"}' | http PUT https://volly-sms.herokuapp.com/volunteer/apply Authorization:'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlblNlZWQiOiJkNzc2YjhkNmZiZTkwNTg3MDMwYjkzMjhjYmYwODlmZmU3ODJlOTQ5NTg5YTc3MWI5YzIyYzJhYWMxOWVkNzAzNzBkYWE2YmFkZTQ3MjA5ZWM5MmYxZTY3ZDNlMTZjYzc0MzE3MmJhYTE5ZDcyMjdjMGE0MDhiMGZjNTRmZGUyOSIsImlhdCI6MTUxNDg2ODEyOX0.fn9K2zzCLlLYORPzgQv7htyGAfrPqvHJaJaeNtXUeDs'
 
 // Response: 200
+{
+    "activeCompanies": [],
+    "pendingCompanies": [
+        {
+            "companyId": "5a4c4ef39c22fc0014afe65c",
+            "companyName": "bigBobsCharityHouse",
+            "email": "bigBob@bbch.org",
+            "phoneNumber": "(216) 555-1234",
+            "website": "www.companywebsite.org"
+        }
+    ]
+}
 ```
-
-TODO: We need to change this so that the a subset of the volunteer's information is sent back, including pendingCompanies array and activeCompanies array.
 
 #### `PUT /volunteer/leave`
 

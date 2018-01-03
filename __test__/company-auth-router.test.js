@@ -7,6 +7,7 @@ const superagent = require('superagent');
 
 const server = require('../lib/server');
 const Volunteer = require('../model/volunteer');
+const Company = require('../model/company');
 const companyMockFactory = require('./lib/company-mock-factory');
 const volunteerMockFactory = require('./lib/volunteer-mock-factory');
 
@@ -200,6 +201,56 @@ describe('company-auth-router.js', () => {
   });
 
   describe('PUT', () => {
+    describe('PUT /company/update', () => {
+      test('should return object with updated information', () => {
+        let newData = null;
+        return companyMockFactory.create()
+          .then(mock => {
+            newData = {
+              companyName: faker.company.companyName(),
+              password: faker.internet.password(),
+              email: faker.internet.email(),
+              phoneNumber: faker.phone.phoneNumber(),
+              website: faker.internet.url(),
+            };
+            return superagent.put(`${process.env.API_URL}/company/update`)
+              .set('Authorization', `Bearer ${mock.token}`)
+              .send(newData);
+          })
+          .then(response => {            
+            expect(response.body.companyName).toEqual(newData.companyName);
+            expect(response.body.email).toEqual(newData.email);
+            expect(response.body.phoneNumber).toEqual(newData.phoneNumber);
+            expect(response.body.website).toEqual(newData.website);
+            expect(response.body.token).toBeTruthy();
+            expect(response.status).toEqual(200);
+          });
+      }); 
+      test('if companyName or password is not updated, there should not be a new token', () => {
+        return companyMockFactory.create()
+          .then(mock => {
+            return superagent.put(`${process.env.API_URL}/company/update`)
+              .set('Authorization', `Bearer ${mock.token}`)
+              .send({email: faker.internet.email()});
+          })
+          .then(response => {            
+            expect(response.body.token).toBeFalsy();
+            expect(response.status).toEqual(200);
+          });
+      }); 
+      test('if no valid property is sent, 400 status code is returned', () => {
+        return companyMockFactory.create()
+          .then(mock => {
+            return superagent.put(`${process.env.API_URL}/company/update`)
+              .set('Authorization', `Bearer ${mock.token}`);
+          })
+          .then(Promise.reject)
+          .catch(response => {            
+            expect(response.status).toEqual(400);
+          });
+      }); 
+    });
+
     describe('PUT /company/approve', () => {
       test('should return object with active and pending volunteers arrays', () => { 
         let mock = {};
@@ -323,6 +374,54 @@ describe('company-auth-router.js', () => {
           .then(Promise.reject)
           .catch(response => {
             expect(response.status).toEqual(404);
+          });
+      });
+    });
+  });
+
+  describe('DELETE', () => {
+    describe('DELETE /company/delete', () => {
+      test('should respond 204 for pendingCompanies', () => {
+        let mock = null;
+        return volunteerMockFactory.createAndAddPending()
+          .then(mockData => {
+            mock = mockData;
+            expect(mock.volunteer.pendingCompanies.length).toBeGreaterThan(0);
+            return superagent.delete(`${process.env.API_URL}/company/delete`)
+              .set('Authorization', `Bearer ${mock.companyToken}`);
+          })
+          .then(response => {
+            expect(response.status).toEqual(204);
+            return Volunteer.findById(mock.volunteer._id);
+          })
+          .then(volunteer => {
+            expect(volunteer.pendingCompanies.length).toEqual(0);
+            return Company.findById(mock.company._id);
+          })
+          .then(company => {
+            expect(company).toBeNull();
+          });
+      });
+
+      test('should respond 204 for activeCompanies', () => {
+        let mock = null;
+        return volunteerMockFactory.createAndAddActive()
+          .then(mockData => {
+            mock = mockData;
+            expect(mock.volunteer.activeCompanies.length).toBeGreaterThan(0);
+            return superagent.delete(`${process.env.API_URL}/company/delete`)
+              .set('Authorization', `Bearer ${mock.companyToken}`);
+          })
+          .then(response => {
+            expect(response.status).toEqual(204);
+            return Volunteer.findById(mock.volunteer._id);
+          })
+          .then(volunteer => {
+            expect(volunteer.activeCompanies.length).toEqual(0);
+            return Company.findById(mock.company._id);
+          })
+          .then(company => {
+            expect(company).toBeNull();
           });
       });
     });

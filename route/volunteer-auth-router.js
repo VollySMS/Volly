@@ -55,6 +55,35 @@ volunteerAuthRouter.get('/volunteer/active', bearerAuthVolunteer, (request, resp
     .catch(next);
 });
 
+volunteerAuthRouter.put('/volunteer/update', bearerAuthVolunteer, jsonParser, (request, response, next) => {
+  if(!(request.body.userName || request.body.password || request.body.email || request.body.phoneNumber || request.body.firstName || request.body.lastName)) 
+    return next(new httpErrors(400, '__ERROR__ <userName>, <email>, <phoneNumber>, <firstName>, <lastName> or <password> are required to update volunteer info'));
+  
+  let data = {};
+  for(let prop of Object.keys(request.body)){
+    if(request.volunteer[prop])
+      request.volunteer[prop] = request.body[prop];
+  }
+
+  return request.volunteer.save()
+    .then(volunteer => request.body.password ? request.volunteer.changePassword(request.body.password) : volunteer)
+    .then(volunteer => {
+      data.userName = volunteer.userName;
+      data.email = volunteer.email;
+      data.phoneNumber = volunteer.phoneNumber;
+      data.firstName = volunteer.firstName;
+      data.lastName = volunteer.lastName;
+
+      return request.body.userName || request.body.password ? volunteer.createToken() : null;
+    })
+    .then(token => {
+      if(token)
+        data.token = token;
+      return response.json(data);
+    })
+    .catch(next);
+});
+
 volunteerAuthRouter.put('/volunteer/apply', bearerAuthVolunteer, jsonParser, (request, response, next) => {
   if(!request.body.companyId)
     return next(new httpErrors(400, '__ERROR__ <companyId> is required to apply.'));
@@ -114,5 +143,30 @@ volunteerAuthRouter.put('/volunteer/leave', bearerAuthVolunteer, jsonParser, (re
         .populate('activeCompanies');
     })
     .then(volunteer => response.json(volunteer.getCensoredCompanies()))
+    .catch(next);
+});
+
+volunteerAuthRouter.delete('/volunteer/delete', bearerAuthVolunteer, (request, response, next) => {
+  let data = {};
+  return Volunteer.findById(request.volunteer._id)
+    .populate('pendingCompanies')
+    .populate('activeCompanies')
+    .then(volunteer => {
+      data.pending = volunteer.pendingCompanies;
+      data.active = volunteer.activeCompanies;
+      
+      return Promise.all(data.pending.map(company => {
+        company.pendingVolunteers = company.pendingVolunteers.filter(volunteerId => volunteerId.toString() !== request.volunteer._id.toString());        
+        return company.save();
+      }));
+    })
+    .then(() => {
+      return Promise.all(data.active.map(company => {
+        company.activeVolunteers = company.activeVolunteers.filter(volunteerId => volunteerId.toString() !== request.volunteer._id.toString());
+        return company.save();
+      }));
+    })
+    .then(() => Volunteer.remove({}))
+    .then(() => response.sendStatus(204))
     .catch(next);
 });
