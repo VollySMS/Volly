@@ -41,6 +41,20 @@ volunteerAuthRouter.get('/volunteer/opportunities', bearerAuthVolunteer, (reques
     .catch(next);
 });
 
+volunteerAuthRouter.get('/volunteer/pending', bearerAuthVolunteer, (request, response, next) => {
+  return Volunteer.findById(request.volunteer._id)
+    .populate('pendingCompanies')
+    .then(volunteer => response.json({pendingCompanies: volunteer.getCensoredCompanies().pendingCompanies}))
+    .catch(next);
+});
+
+volunteerAuthRouter.get('/volunteer/active', bearerAuthVolunteer, (request, response, next) => {
+  return Volunteer.findById(request.volunteer._id)
+    .populate('activeCompanies')
+    .then(volunteer => response.json({activeCompanies: volunteer.getCensoredCompanies().activeCompanies}))
+    .catch(next);
+});
+
 volunteerAuthRouter.put('/volunteer/apply', bearerAuthVolunteer, jsonParser, (request, response, next) => {
   if(!request.body.companyId)
     return next(new httpErrors(400, '__ERROR__ <companyId> is required to apply.'));

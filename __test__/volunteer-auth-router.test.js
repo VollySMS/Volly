@@ -180,6 +180,50 @@ describe('volunteer-auth-router.js', () => {
           });     
       });
     });
+
+    describe('GET /volunteer/pending', () => {
+      test('should return a 200 if pending companies are successfully found', () => { 
+        let mock = {};
+        return volunteerMockFactory.createAndAddPending()
+          .then(mockData => {
+            mock = mockData;
+            return superagent.get(`${process.env.API_URL}/volunteer/pending`)
+              .set('Authorization', `Bearer ${mock.volunteerToken}`);
+          })
+          .then(response => {
+            expect(response.body.pendingCompanies[0]).toEqual({
+              companyId: mock.company._id.toString(),
+              companyName: mock.company.companyName,
+              phoneNumber: mock.company.phoneNumber,
+              email: mock.company.email,
+              website: mock.company.website,
+            });
+            expect(response.status).toEqual(200);
+          });
+      });
+    });
+
+    describe('GET /volunteer/active', () => {
+      test('should return a 200 if active companies are successfully found', () => { 
+        let mock = {};
+        return volunteerMockFactory.createAndAddActive()
+          .then(mockData => {
+            mock = mockData;
+            return superagent.get(`${process.env.API_URL}/volunteer/active`)
+              .set('Authorization', `Bearer ${mock.volunteerToken}`);
+          })
+          .then(response => {
+            expect(response.body.activeCompanies[0]).toEqual({
+              companyId: mock.company._id.toString(),
+              companyName: mock.company.companyName,
+              phoneNumber: mock.company.phoneNumber,
+              email: mock.company.email,
+              website: mock.company.website,
+            });
+            expect(response.status).toEqual(200);
+          });
+      });
+    });
   });
   
 
