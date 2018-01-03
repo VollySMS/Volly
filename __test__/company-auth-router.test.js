@@ -22,7 +22,7 @@ describe('company-auth-router.js', () => {
           companyName: faker.company.companyName(),
           password: faker.internet.password(),
           email: faker.internet.email(),
-          phoneNumber: faker.phone.phoneNumber(),
+          phoneNumber: '+1' + faker.phone.phoneNumber().split('x')[0].replace(/\D/g, ''),
           website: faker.internet.url(),
         })
         .then(response => {
@@ -37,7 +37,7 @@ describe('company-auth-router.js', () => {
           companyName: faker.company.companyName(),
           password: faker.internet.password(),
           email: 'invalid email',
-          phoneNumber: faker.phone.phoneNumber(),
+          phoneNumber: '+1' + faker.phone.phoneNumber().split('x')[0].replace(/\D/g, ''),
           website: faker.internet.url(),
         })
         .then(Promise.reject)
@@ -51,7 +51,7 @@ describe('company-auth-router.js', () => {
         .send({
           password: faker.internet.password(),
           email: faker.internet.email(),
-          phoneNumber: faker.phone.phoneNumber(),
+          phoneNumber: '+1' + faker.phone.phoneNumber().split('x')[0].replace(/\D/g, ''),
         })
         .then(Promise.reject)
         .catch(response => {
@@ -69,7 +69,7 @@ describe('company-auth-router.js', () => {
               companyName: company.companyName,
               password: faker.internet.password(),
               email: faker.internet.email(),
-              phoneNumber: faker.phone.phoneNumber(),
+              phoneNumber: '+1' + faker.phone.phoneNumber().split('x')[0].replace(/\D/g, ''),
               website: faker.internet.url(),
             });
         })
@@ -85,7 +85,7 @@ describe('company-auth-router.js', () => {
           companyName: faker.company.companyName(),
           password: faker.internet.password(),
           email: faker.internet.email(),
-          phoneNumber: faker.phone.phoneNumber(),
+          phoneNumber: '+1' + faker.phone.phoneNumber().split('x')[0].replace(/\D/g, ''),
           website: faker.internet.url(),
         })
         .then(Promise.reject)
@@ -224,7 +224,7 @@ describe('company-auth-router.js', () => {
               companyName: faker.company.companyName(),
               password: faker.internet.password(),
               email: faker.internet.email(),
-              phoneNumber: faker.phone.phoneNumber(),
+              phoneNumber: '+1' + faker.phone.phoneNumber().split('x')[0].replace(/\D/g, ''),
               website: faker.internet.url(),
             };
             return superagent.put(`${process.env.API_URL}/company/update`)
@@ -266,7 +266,7 @@ describe('company-auth-router.js', () => {
     });
 
     describe('PUT /company/approve', () => {
-      test.only('should return object with active and pending volunteers arrays', () => {
+      test('should return object with active and pending volunteers arrays', () => {
         let mock = {};
         return volunteerMockFactory.createAndAddPending()
           .then(mockData => {
