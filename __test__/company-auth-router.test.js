@@ -7,6 +7,7 @@ const superagent = require('superagent');
 
 const server = require('../lib/server');
 const Volunteer = require('../model/volunteer');
+const Company = require('../model/company');
 const companyMockFactory = require('./lib/company-mock-factory');
 const volunteerMockFactory = require('./lib/volunteer-mock-factory');
 
@@ -323,6 +324,54 @@ describe('company-auth-router.js', () => {
           .then(Promise.reject)
           .catch(response => {
             expect(response.status).toEqual(404);
+          });
+      });
+    });
+  });
+
+  describe('DELETE', () => {
+    describe('DELETE /company/delete', () => {
+      test('should respond 204 for pendingCompanies', () => {
+        let mock = null;
+        return volunteerMockFactory.createAndAddPending()
+          .then(mockData => {
+            mock = mockData;
+            expect(mock.volunteer.pendingCompanies.length).toBeGreaterThan(0);
+            return superagent.delete(`${process.env.API_URL}/company/delete`)
+              .set('Authorization', `Bearer ${mock.companyToken}`);
+          })
+          .then(response => {
+            expect(response.status).toEqual(204);
+            return Volunteer.findById(mock.volunteer._id);
+          })
+          .then(volunteer => {
+            expect(volunteer.pendingCompanies.length).toEqual(0);
+            return Company.findById(mock.company._id);
+          })
+          .then(company => {
+            expect(company).toBeNull();
+          });
+      });
+
+      test('should respond 204 for activeCompanies', () => {
+        let mock = null;
+        return volunteerMockFactory.createAndAddActive()
+          .then(mockData => {
+            mock = mockData;
+            expect(mock.volunteer.activeCompanies.length).toBeGreaterThan(0);
+            return superagent.delete(`${process.env.API_URL}/company/delete`)
+              .set('Authorization', `Bearer ${mock.companyToken}`);
+          })
+          .then(response => {
+            expect(response.status).toEqual(204);
+            return Volunteer.findById(mock.volunteer._id);
+          })
+          .then(volunteer => {
+            expect(volunteer.activeCompanies.length).toEqual(0);
+            return Company.findById(mock.company._id);
+          })
+          .then(company => {
+            expect(company).toBeNull();
           });
       });
     });

@@ -92,3 +92,28 @@ companyAuthRouter.put('/company/terminate', bearerAuthCompany, jsonParser, (requ
     .then(company => response.json(company.getCensoredVolunteers()))
     .catch(next);
 });
+
+companyAuthRouter.delete('/company/delete', bearerAuthCompany, (request, response, next) => {
+  let data = {};
+  return Company.findById(request.company._id)
+    .populate('pendingVolunteers')
+    .populate('activeVolunteers')
+    .then(company => {
+      data.pending = company.pendingVolunteers;
+      data.active = company.activeVolunteers;
+      
+      return Promise.all(data.pending.map(volunteer => {
+        volunteer.pendingCompanies = volunteer.pendingCompanies.filter(companyId => companyId.toString() !== request.company._id.toString());        
+        return volunteer.save();
+      }));
+    })
+    .then(() => {
+      return Promise.all(data.active.map(volunteer => {
+        volunteer.activeCompanies = volunteer.activeCompanies.filter(companyId => companyId.toString() !== request.company._id.toString());
+        return volunteer.save();
+      }));
+    })
+    .then(() => Company.remove({}))
+    .then(() => response.sendStatus(204))
+    .catch(next);
+});
