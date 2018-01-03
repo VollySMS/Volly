@@ -11,9 +11,8 @@ const bearerAuthCompany = require('../lib/bearer-auth-middleware')(Company);
 const companyAuthRouter = module.exports = new Router();
 
 companyAuthRouter.post('/company/signup', jsonParser, (request, response, next) => {
-  if(!request.body.companyName || !request.body.password || !request.body.email || !request.body.phoneNumber || !request.body.website) {
+  if(!request.body.companyName || !request.body.password || !request.body.email || !request.body.phoneNumber || !request.body.website) 
     return next(new httpErrors(400, '__ERROR__ <companyName>, <email>, <phoneNumber>, <website> and <password> are required to sign up.'));
-  }
 
   return Company.create(request.body.companyName, request.body.password, request.body.email, request.body.phoneNumber, request.body.website)
     .then(company => company.createToken())
@@ -38,6 +37,34 @@ companyAuthRouter.get('/company/active', bearerAuthCompany, (request, response, 
   return Company.findById(request.company._id)
     .populate('activeVolunteers')
     .then(company => response.json({activeVolunteers: company.getCensoredVolunteers().activeVolunteers}))
+    .catch(next);
+});
+
+companyAuthRouter.put('/company/update', bearerAuthCompany, jsonParser, (request, response, next) => {
+  if(!(request.body.companyName || request.body.password || request.body.email || request.body.phoneNumber || request.body.website)) 
+    return next(new httpErrors(400, '__ERROR__ <companyName>, <email>, <phoneNumber>, <website> or <password> are required to update company info'));
+  
+  let data = {};
+  for(let prop of Object.keys(request.body)){
+    if(request.company[prop])
+      request.company[prop] = request.body[prop];
+  }
+
+  return request.company.save()
+    .then(company => request.body.password ? request.company.changePassword(request.body.password) : company)
+    .then(company => {
+      data.companyName = company.companyName;
+      data.email = company.email;
+      data.phoneNumber = company.phoneNumber;
+      data.website = company.website;
+
+      return request.body.companyName || request.body.password ? company.createToken() : null;
+    })
+    .then(token => {
+      if(token)
+        data.token = token;
+      return response.json(data);
+    })
     .catch(next);
 });
 

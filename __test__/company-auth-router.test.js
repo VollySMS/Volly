@@ -201,6 +201,45 @@ describe('company-auth-router.js', () => {
   });
 
   describe('PUT', () => {
+    describe('PUT /company/update', () => {
+      test('should return object with updated information', () => {
+        let newData = null;
+        return companyMockFactory.create()
+          .then(mock => {
+            newData = {
+              companyName: faker.company.companyName(),
+              password: faker.internet.password(),
+              email: faker.internet.email(),
+              phoneNumber: faker.phone.phoneNumber(),
+              website: faker.internet.url(),
+            };
+            return superagent.put(`${process.env.API_URL}/company/update`)
+              .set('Authorization', `Bearer ${mock.token}`)
+              .send(newData);
+          })
+          .then(response => {            
+            expect(response.body.companyName).toEqual(newData.companyName);
+            expect(response.body.email).toEqual(newData.email);
+            expect(response.body.phoneNumber).toEqual(newData.phoneNumber);
+            expect(response.body.website).toEqual(newData.website);
+            expect(response.body.token).toBeTruthy();
+            expect(response.status).toEqual(200);
+          });
+      }); 
+      test('if companyName or password is not updated, there should not be a new token', () => {
+        return companyMockFactory.create()
+          .then(mock => {
+            return superagent.put(`${process.env.API_URL}/company/update`)
+              .set('Authorization', `Bearer ${mock.token}`)
+              .send({email: faker.internet.email()});
+          })
+          .then(response => {            
+            expect(response.body.token).toBeFalsy();
+            expect(response.status).toEqual(200);
+          });
+      }); 
+    });
+
     describe('PUT /company/approve', () => {
       test('should return object with active and pending volunteers arrays', () => { 
         let mock = {};
