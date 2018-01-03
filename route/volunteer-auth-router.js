@@ -11,11 +11,10 @@ const bearerAuthVolunteer = require('../lib/bearer-auth-middleware')(Volunteer);
 const volunteerAuthRouter = module.exports = new Router();
 
 volunteerAuthRouter.post('/volunteer/signup', jsonParser, (request, response, next) => {
-  let filter = /^.+\@.+\.+.+$/; //eslint-disable-line
+  let filter = /^.+@.+\..+$/;
 
-  if(!request.body.firstName || !request.body.lastName || !request.body.userName || !request.body.password || !request.body.email || !request.body.phoneNumber) {
+  if(!request.body.firstName || !request.body.lastName || !request.body.userName || !request.body.password || !request.body.email || !request.body.phoneNumber)
     return next(new httpErrors(400, '__ERROR__ <firstName>, <lastName>, <userName>, <email>, <phoneNumber>, and <password> are required to sign up.'));
-  }
 
   if(!filter.test(request.body.email))
     return next(new httpErrors(400, '__ERROR__ valid email required'));
@@ -95,16 +94,12 @@ volunteerAuthRouter.put('/volunteer/apply', bearerAuthVolunteer, jsonParser, (re
 
   return Company.findById(request.body.companyId)
     .then(company => {
-      for(let volunteer of company.activeVolunteers) {
-        if(volunteer.toString() === request.volunteerId.toString())
-          throw new httpErrors(409, '__ERROR__ duplicate volunteer.');
-      }
-
-      for(let volunteer of company.pendingVolunteers) {
-        if(volunteer.toString() === request.volunteerId.toString()) {
-          throw new httpErrors(409, '__ERROR__ duplicate volunteer.');
-        }
-      }
+      if(company.activeVolunteers
+        .map(volunteerId => volunteerId.toString())
+        .includes(request.volunteerId.toString()) || company.pendingVolunteers
+          .map(volunteerId => volunteerId.toString())
+          .includes(request.volunteerId.toString()))
+        throw new httpErrors(409, '__ERROR__ duplicate volunteer.');
 
       company.pendingVolunteers.push(request.volunteerId);
       return company.save();

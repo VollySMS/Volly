@@ -59,6 +59,21 @@ describe('company-auth-router.js', () => {
         });
     });
 
+    test('creating an account should respond with a 400 if an incorrect type is sent', () => {
+      return superagent.post(`${process.env.API_URL}/company/signup`)
+        .send({
+          companyName: {},
+          password: faker.internet.password(),
+          email: faker.internet.email(), 
+          phoneNumber: faker.phone.phoneNumber(),
+          website: faker.internet.url(),
+        })
+        .then(Promise.reject)
+        .catch(response => {
+          expect(response.status).toEqual(400);
+        });
+    });
+
     test('creating an account with duplicate information should return a 409', () => {
       let company = null;
       return companyMockFactory.create()
@@ -306,21 +321,6 @@ describe('company-auth-router.js', () => {
             expect(response.status).toEqual(404);
           });
       });
-
-      test('should return 404 if there is no pending volunteer with provided ID', () => {
-        let mock = {};
-        return volunteerMockFactory.createAndAddPending()
-          .then(mockData => {
-            mock = mockData;
-            return superagent.put(`${process.env.API_URL}/company/approve`)
-              .set('Authorization', `Bearer ${mock.companyToken}`)
-              .send({volunteerId: '5a4bc01dcf40590014e07350'});
-          })
-          .then(Promise.reject)
-          .catch(response => {
-            expect(response.status).toEqual(404);
-          });
-      });
     });
 
     describe('PUT /company/terminate', () => {
@@ -455,4 +455,21 @@ describe('company-auth-router.js', () => {
     });
   });
 
+  describe('__INTERNAL_SERVER_ERROR__', () => {
+    test('should return a 500 if some anomalous error occurs.', () => {
+      delete process.env.SALT_SECRET;
+      return superagent.post(`${process.env.API_URL}/company/signup`)
+        .send({
+          companyName: faker.company.companyName(),          
+          password: faker.internet.password(),
+          email: faker.internet.email(), 
+          phoneNumber: faker.phone.phoneNumber(),
+          website: faker.internet.url(),
+        })
+        .then(Promise.reject)
+        .catch(response => {
+          expect(response.status).toEqual(500);
+        });
+    });
+  });
 });
