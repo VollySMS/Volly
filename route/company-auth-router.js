@@ -12,15 +12,13 @@ const companyAuthRouter = module.exports = new Router();
 
 companyAuthRouter.post('/company/signup', jsonParser, (request, response, next) => {
 
-  let filter = /^.+\@.+\..+$/; //eslint-disable-line
+  let filter = /^.+@.+\..+$/;
 
   if(!request.body.companyName || !request.body.password || !request.body.email || !request.body.phoneNumber || !request.body.website)
     return next(new httpErrors(400, '__ERROR__ <companyName>, <email>, <phoneNumber>, <website> and <password> are required to sign up.'));
 
-  if(!filter.test(request.body.email)){
-    console.log(request.body.email);
+  if(!filter.test(request.body.email))
     return next(new httpErrors(400, '__ERROR__ valid email required'));
-  }
 
   return Company.create(request.body.companyName, request.body.password, request.body.email, request.body.phoneNumber, request.body.website)
     .then(company => company.createToken())

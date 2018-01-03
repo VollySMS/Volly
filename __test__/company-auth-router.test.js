@@ -457,4 +457,21 @@ describe('company-auth-router.js', () => {
     });
   });
 
+  describe('__INTERNAL_SERVER_ERROR__', () => {
+    test('should return a 500 if some anomalous error occurs.', () => {
+      delete process.env.SALT_SECRET;
+      return superagent.post(`${process.env.API_URL}/company/signup`)
+        .send({
+          companyName: faker.company.companyName(),          
+          password: faker.internet.password(),
+          email: faker.internet.email(), 
+          phoneNumber: faker.phone.phoneNumber(),
+          website: faker.internet.url(),
+        })
+        .then(Promise.reject)
+        .catch(response => {
+          expect(response.status).toEqual(500);
+        });
+    });
+  });
 });
