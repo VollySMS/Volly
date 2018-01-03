@@ -6,7 +6,7 @@ const httpErrors = require('http-errors');
 const jsonWebToken = require('jsonwebtoken');
 const mongoose = require('mongoose');
 
-const companySchema = mongoose.Schema({ // TODO: add website property
+const companySchema = mongoose.Schema({ 
   passwordHash: {
     type: String,
     required: true,
@@ -68,6 +68,23 @@ companySchema.methods.createToken = function() {
         tokenSeed: company.tokenSeed,
       }, process.env.SALT_SECRET);
     });
+};
+
+companySchema.methods._censorVolunteers = (array) => {
+  return array.map(pendingVolunteers => ({
+    volunteerId: pendingVolunteers._id,
+    firstName: pendingVolunteers.firstName,
+    lastName: pendingVolunteers.lastName,
+    phoneNumber: pendingVolunteers.phoneNumber,
+    email: pendingVolunteers.email,
+  }));
+};
+
+companySchema.methods.getCensoredVolunteers = function() {
+  return {
+    pendingVolunteers: this._censorVolunteers(this.pendingVolunteers), 
+    activeVolunteers: this._censorVolunteers(this.activeVolunteers),
+  };
 };
 
 const Company = module.exports = mongoose.model('company', companySchema);

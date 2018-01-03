@@ -79,6 +79,23 @@ volunteerSchema.methods.createToken = function() {
     });
 };
 
+volunteerSchema.methods._censorCompanies = (array) => {
+  return array.map(pendingCompany => ({
+    companyId: pendingCompany._id,
+    companyName: pendingCompany.companyName,
+    phoneNumber: pendingCompany.phoneNumber,
+    email: pendingCompany.email,
+    website: pendingCompany.website,
+  }));
+};
+
+volunteerSchema.methods.getCensoredCompanies = function() {
+  return {
+    pendingCompanies: this._censorCompanies(this.pendingCompanies), 
+    activeCompanies: this._censorCompanies(this.activeCompanies),
+  };
+};
+
 const Volunteer = module.exports = mongoose.model('volunteer', volunteerSchema);
 
 Volunteer.create = (firstName, lastName, userName, password, email, phoneNumber) => {

@@ -22,16 +22,38 @@ volunteerAuthRouter.post('/volunteer/signup', jsonParser, (request, response, ne
 });
 
 volunteerAuthRouter.get('/volunteer/login', basicAuthVolunteer, (request, response, next) => {
-  if(!request.volunteer) {
-    return next(new httpErrors(404, '__ERROR__ volunteer not found'));
-  }
-  
   return request.volunteer.createToken()
     .then(token => response.json({token}))
     .catch(next);
 });
 
-// TODO: Add a GET route to get an array of all companies that they could apply for.
+volunteerAuthRouter.get('/volunteer/opportunities', bearerAuthVolunteer, (request, response, next) => {
+  return Company.find({})
+    .then(companies => response.json({
+      companies: companies.map(company => ({
+        companyId: company._id,
+        companyName: company.companyName,
+        phoneNumber: company.phoneNumber,
+        email: company.email,
+        website: company.website,      
+      })),
+    }))
+    .catch(next);
+});
+
+volunteerAuthRouter.get('/volunteer/pending', bearerAuthVolunteer, (request, response, next) => {
+  return Volunteer.findById(request.volunteer._id)
+    .populate('pendingCompanies')
+    .then(volunteer => response.json({pendingCompanies: volunteer.getCensoredCompanies().pendingCompanies}))
+    .catch(next);
+});
+
+volunteerAuthRouter.get('/volunteer/active', bearerAuthVolunteer, (request, response, next) => {
+  return Volunteer.findById(request.volunteer._id)
+    .populate('activeCompanies')
+    .then(volunteer => response.json({activeCompanies: volunteer.getCensoredCompanies().activeCompanies}))
+    .catch(next);
+});
 
 volunteerAuthRouter.put('/volunteer/apply', bearerAuthVolunteer, jsonParser, (request, response, next) => {
   if(!request.body.companyId)
@@ -39,8 +61,10 @@ volunteerAuthRouter.put('/volunteer/apply', bearerAuthVolunteer, jsonParser, (re
 
   return Company.findById(request.body.companyId)
     .then(company => {
-      if(!company)
-        throw new httpErrors(404, '__ERROR__ company not found.');
+      for(let volunteer of company.activeVolunteers) {
+        if(volunteer.toString() === request.volunteerId.toString()) 
+          throw new httpErrors(409, '__ERROR__ duplicate volunteer.');
+      }
 
       for(let volunteer of company.pendingVolunteers) {
         if(volunteer.toString() === request.volunteerId.toString()) {
@@ -53,24 +77,21 @@ volunteerAuthRouter.put('/volunteer/apply', bearerAuthVolunteer, jsonParser, (re
     })
     .then(() => Volunteer.findById(request.volunteerId))
     .then(volunteer => {
-      if(!volunteer)
-        throw new httpErrors(404, '__ERROR__ volunteer not found.');
       volunteer.pendingCompanies.push(request.body.companyId);
       return volunteer.save();
     })
-    .then(() => response.sendStatus(200)) // TODO: send back arrays instead
+    .then(volunteer => {
+      return Volunteer.findById(volunteer._id)
+        .populate('pendingCompanies')
+        .populate('activeCompanies');
+    })
+    .then(volunteer => response.json(volunteer.getCensoredCompanies()))
     .catch(next);
-
 });
 
 volunteerAuthRouter.put('/volunteer/leave', bearerAuthVolunteer, jsonParser, (request, response, next) => {
-  if(!request.volunteer) {
-    return next(new httpErrors(404, '__ERROR__ volunteer not found'));
-  }
-
-  if(!request.body.companyId){
+  if(!request.body.companyId)
     return next(new httpErrors(400, '__ERROR__ company id is required'));
-  }
 
   return Company.findById(request.body.companyId)
     .then(company => {
@@ -87,6 +108,11 @@ volunteerAuthRouter.put('/volunteer/leave', bearerAuthVolunteer, jsonParser, (re
       request.volunteer.pendingCompanies = request.volunteer.pendingCompanies.filter(companyId => companyId.toString() !== request.body.companyId.toString());
       return request.volunteer.save();
     })
-    .then(volunteer => response.json({volunteer})) // TODO: don't send the entire volunteer back, just send back the arrays (with detailed info about the company)
+    .then(volunteer => {
+      return Volunteer.findById(volunteer._id)
+        .populate('pendingCompanies')
+        .populate('activeCompanies');
+    })
+    .then(volunteer => response.json(volunteer.getCensoredCompanies()))
     .catch(next);
 });
