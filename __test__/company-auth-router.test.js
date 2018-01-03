@@ -243,5 +243,89 @@ describe('company-auth-router.js', () => {
           });
       });
     });
+
+    describe('PUT /company/terminate', () => {
+      test('should return a 200 if pending volunteer is successfully removed', () => { 
+        let mock = {};
+        return volunteerMockFactory.createAndAddPending()
+          .then(mockData => {
+            mock = mockData;
+            expect(mock.company.pendingVolunteers[0].toString()).toEqual(mock.volunteer._id.toString());
+            expect(mock.volunteer.pendingCompanies[0].toString()).toEqual(mock.company._id.toString());
+          })
+          .then(() => {
+            return superagent.put(`${process.env.API_URL}/company/terminate`)
+              .set('Authorization', `Bearer ${mock.companyToken}`)
+              .send({
+                volunteerId: mock.volunteer._id,
+              });
+          })
+          .then(response => {
+            expect(response.status).toEqual(200);
+            expect(response.body.pendingVolunteers.length).toEqual(0);
+            expect(response.body.activeVolunteers.length).toEqual(0);
+            return Volunteer.findById(mock.volunteer._id);
+          })
+          .then(volunteer => {
+            expect(volunteer.pendingCompanies.length).toEqual(0);
+            expect(volunteer.activeCompanies.length).toEqual(0);
+          });
+      });
+
+      test('should return a 200 if active volunteer is successfully terminated', () => { 
+        let mock = {};
+        return volunteerMockFactory.createAndAddActive()
+          .then(mockData => {
+            mock = mockData;
+            expect(mock.company.activeVolunteers[0]).toEqual(mock.volunteer._id);
+            expect(mock.volunteer.activeCompanies[0]).toEqual(mock.company._id);
+          })
+          .then(() => {
+            return superagent.put(`${process.env.API_URL}/company/terminate`)
+              .set('Authorization', `Bearer ${mock.companyToken}`)
+              .send({
+                volunteerId: mock.volunteer._id,
+              });
+          })
+          .then(response => {
+            expect(response.status).toEqual(200);
+            expect(response.body.pendingVolunteers.length).toEqual(0);
+            expect(response.body.activeVolunteers.length).toEqual(0);
+            return Volunteer.findById(mock.volunteer._id);
+          })
+          .then(volunteer => {
+            expect(volunteer.pendingCompanies.length).toEqual(0);
+            expect(volunteer.activeCompanies.length).toEqual(0);
+          });
+      });
+
+      test('should return a 400 if volunteer ID is missing', () => { 
+        return volunteerMockFactory.createAndAddPending()
+          .then(mock => {
+            return superagent.put(`${process.env.API_URL}/company/terminate`)
+              .set('Authorization', `Bearer ${mock.companyToken}`);
+          })
+          .then(Promise.reject)
+          .catch(response => {
+            expect(response.status).toEqual(400);
+          });
+      });
+
+      test('should return a 404 if no volunteer with provided ID is found', () => { 
+        return volunteerMockFactory.createAndAddPending()
+          .then(mock => {
+            return superagent.put(`${process.env.API_URL}/company/terminate`)
+              .set('Authorization', `Bearer ${mock.companyToken}`)
+              .send({
+                volunteerId: '5a493e9d1bc2c881baf35d85',
+              });
+          })
+          .then(Promise.reject)
+          .catch(response => {
+            expect(response.status).toEqual(404);
+          });
+      });
+    });
   });
+
 });

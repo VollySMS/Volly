@@ -64,3 +64,31 @@ companyAuthRouter.put('/company/approve', bearerAuthCompany, jsonParser, (reques
     .then(company => response.json(company.getCensoredVolunteers()))
     .catch(next);
 });
+
+companyAuthRouter.put('/company/terminate', bearerAuthCompany, jsonParser, (request, response, next) => {
+  if(!request.body.volunteerId)
+    return next(new httpErrors(400, '__ERROR__ volunteer id is required'));
+
+  return Volunteer.findById(request.body.volunteerId)
+    .then(volunteer => {
+      if(!volunteer)
+        throw new httpErrors(404, '__ERROR__ volunteer not found.');
+
+      volunteer.activeCompanies = volunteer.activeCompanies.filter(companyId => companyId.toString() !== request.company._id.toString());
+      volunteer.pendingCompanies = volunteer.pendingCompanies.filter(companyId => companyId.toString() !== request.company._id.toString());
+
+      return volunteer.save();
+    })
+    .then(() => {
+      request.company.activeVolunteers = request.company.activeVolunteers.filter(volunteerId => volunteerId.toString() !== request.body.volunteerId.toString());
+      request.company.pendingVolunteers = request.company.pendingVolunteers.filter(volunteerId => volunteerId.toString() !== request.body.volunteerId.toString());
+      return request.company.save();
+    })
+    .then(company => {
+      return Company.findById(company._id)
+        .populate('pendingVolunteers')
+        .populate('activeVolunteers');
+    })
+    .then(company => response.json(company.getCensoredVolunteers()))
+    .catch(next);
+});
