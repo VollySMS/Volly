@@ -321,21 +321,6 @@ describe('company-auth-router.js', () => {
             expect(response.status).toEqual(404);
           });
       });
-
-      test('should return 404 if there is no pending volunteer with provided ID', () => {
-        let mock = {};
-        return volunteerMockFactory.createAndAddPending()
-          .then(mockData => {
-            mock = mockData;
-            return superagent.put(`${process.env.API_URL}/company/approve`)
-              .set('Authorization', `Bearer ${mock.companyToken}`)
-              .send({volunteerId: '5a4bc01dcf40590014e07350'});
-          })
-          .then(Promise.reject)
-          .catch(response => {
-            expect(response.status).toEqual(404);
-          });
-      });
     });
 
     describe('PUT /company/terminate', () => {

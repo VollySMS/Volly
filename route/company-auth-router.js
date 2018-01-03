@@ -80,10 +80,9 @@ companyAuthRouter.put('/company/approve', bearerAuthCompany, jsonParser, (reques
   let data = {};
   if(!request.company.pendingVolunteers.map(volunteerId => volunteerId.toString()).includes(request.body.volunteerId))
     return next(new httpErrors(404, '__ERROR__ volunteer does not exist in pending volunteers'));
+
   return Volunteer.findById(request.body.volunteerId)
     .then(volunteer => {
-      if(!volunteer)
-        throw new httpErrors(404, '__ERROR__ volunteer not found');
       request.body.volunteerFirstName = volunteer.firstName;
       volunteer.activeCompanies.push(request.company._id);
       volunteer.pendingCompanies = volunteer.pendingCompanies.filter(companyId => companyId.toString() !== request.company._id.toString());
