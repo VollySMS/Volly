@@ -95,16 +95,12 @@ volunteerAuthRouter.put('/volunteer/apply', bearerAuthVolunteer, jsonParser, (re
 
   return Company.findById(request.body.companyId)
     .then(company => {
-      for(let volunteer of company.activeVolunteers) {
-        if(volunteer.toString() === request.volunteerId.toString())
-          throw new httpErrors(409, '__ERROR__ duplicate volunteer.');
-      }
-
-      for(let volunteer of company.pendingVolunteers) {
-        if(volunteer.toString() === request.volunteerId.toString()) {
-          throw new httpErrors(409, '__ERROR__ duplicate volunteer.');
-        }
-      }
+      if(company.activeVolunteers
+        .map(volunteerId => volunteerId.toString())
+        .includes(request.volunteerId.toString()) || company.pendingVolunteers
+          .map(volunteerId => volunteerId.toString())
+          .includes(request.volunteerId.toString()))
+        throw new httpErrors(409, '__ERROR__ duplicate volunteer.');
 
       company.pendingVolunteers.push(request.volunteerId);
       return company.save();
