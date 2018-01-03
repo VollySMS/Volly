@@ -167,7 +167,7 @@ companyAuthRouter.delete('/company/delete', bearerAuthCompany, (request, respons
         return volunteer.save();
       }));
     })
-    .then(() => Company.remove({}))
+    .then(() => Company.findByIdAndRemove(request.company._id))
     .then(() => response.sendStatus(204))
     .catch(next);
 });
