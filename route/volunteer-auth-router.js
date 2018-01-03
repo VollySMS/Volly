@@ -11,9 +11,14 @@ const bearerAuthVolunteer = require('../lib/bearer-auth-middleware')(Volunteer);
 const volunteerAuthRouter = module.exports = new Router();
 
 volunteerAuthRouter.post('/volunteer/signup', jsonParser, (request, response, next) => {
+  let filter = /^([a-zA-Z0-9_\.\-])+\@(([a-zA-Z0-9\-])+\.)+([a-zA-Z0-9]{2,4})+$/; //eslint-disable-line
+
   if(!request.body.firstName || !request.body.lastName || !request.body.userName || !request.body.password || !request.body.email || !request.body.phoneNumber) {
     return next(new httpErrors(400, '__ERROR__ <firstName>, <lastName>, <userName>, <email>, <phoneNumber>, and <password> are required to sign up.'));
   }
+
+  if(!filter.test(request.body.email))
+    return next(new httpErrors(400, '__ERROR__ valid email required'));
 
   return Volunteer.create(request.body.firstName, request.body.lastName, request.body.userName, request.body.password, request.body.email, request.body.phoneNumber)
     .then(volunteer => volunteer.createToken())
@@ -35,7 +40,7 @@ volunteerAuthRouter.get('/volunteer/opportunities', bearerAuthVolunteer, (reques
         companyName: company.companyName,
         phoneNumber: company.phoneNumber,
         email: company.email,
-        website: company.website,      
+        website: company.website,
       })),
     }))
     .catch(next);
@@ -56,9 +61,9 @@ volunteerAuthRouter.get('/volunteer/active', bearerAuthVolunteer, (request, resp
 });
 
 volunteerAuthRouter.put('/volunteer/update', bearerAuthVolunteer, jsonParser, (request, response, next) => {
-  if(!(request.body.userName || request.body.password || request.body.email || request.body.phoneNumber || request.body.firstName || request.body.lastName)) 
+  if(!(request.body.userName || request.body.password || request.body.email || request.body.phoneNumber || request.body.firstName || request.body.lastName))
     return next(new httpErrors(400, '__ERROR__ <userName>, <email>, <phoneNumber>, <firstName>, <lastName> or <password> are required to update volunteer info'));
-  
+
   let data = {};
   for(let prop of Object.keys(request.body)){
     if(request.volunteer[prop])
@@ -91,7 +96,7 @@ volunteerAuthRouter.put('/volunteer/apply', bearerAuthVolunteer, jsonParser, (re
   return Company.findById(request.body.companyId)
     .then(company => {
       for(let volunteer of company.activeVolunteers) {
-        if(volunteer.toString() === request.volunteerId.toString()) 
+        if(volunteer.toString() === request.volunteerId.toString())
           throw new httpErrors(409, '__ERROR__ duplicate volunteer.');
       }
 
@@ -154,9 +159,9 @@ volunteerAuthRouter.delete('/volunteer/delete', bearerAuthVolunteer, (request, r
     .then(volunteer => {
       data.pending = volunteer.pendingCompanies;
       data.active = volunteer.activeCompanies;
-      
+
       return Promise.all(data.pending.map(company => {
-        company.pendingVolunteers = company.pendingVolunteers.filter(volunteerId => volunteerId.toString() !== request.volunteer._id.toString());        
+        company.pendingVolunteers = company.pendingVolunteers.filter(volunteerId => volunteerId.toString() !== request.volunteer._id.toString());
         return company.save();
       }));
     })
