@@ -3,8 +3,10 @@
 const {Router} = require('express');
 const jsonParser = require('express').json();
 const httpErrors = require('http-errors');
+const client = require('twilio')(process.env.TWILIO_SID, process.env.TWILIO_TOKEN);
 const Company = require('../model/company');
 const Volunteer = require('../model/volunteer');
+const logger = require('../lib/logger');
 const basicAuthCompany = require('../lib/basic-auth-middleware')(Company);
 const bearerAuthCompany = require('../lib/bearer-auth-middleware')(Company);
 
@@ -12,7 +14,7 @@ const companyAuthRouter = module.exports = new Router();
 
 companyAuthRouter.post('/company/signup', jsonParser, (request, response, next) => {
 
-  let filter = /^([a-zA-Z0-9_\.\-])+\@(([a-zA-Z0-9\-])+\.)+([a-zA-Z0-9]{2,4})+$/; //eslint-disable-line
+  let filter = /^.+\@.+\.+.+$/; //eslint-disable-line
 
   if(!request.body.companyName || !request.body.password || !request.body.email || !request.body.phoneNumber || !request.body.website)
     return next(new httpErrors(400, '__ERROR__ <companyName>, <email>, <phoneNumber>, <website> and <password> are required to sign up.'));
@@ -75,26 +77,46 @@ companyAuthRouter.put('/company/update', bearerAuthCompany, jsonParser, (request
 });
 
 companyAuthRouter.put('/company/approve', bearerAuthCompany, jsonParser, (request, response, next) => {
+  let data = {};
+  if(!request.company.pendingVolunteers.map(volunteerId => volunteerId.toString()).includes(request.body.volunteerId))
+    return next(new httpErrors(404, '__ERROR__ volunteer does not exist in pending volunteers'));
   return Volunteer.findById(request.body.volunteerId)
     .then(volunteer => {
       if(!volunteer)
         throw new httpErrors(404, '__ERROR__ volunteer not found');
-
+      request.body.volunteerFirstName = volunteer.firstName;
       volunteer.activeCompanies.push(request.company._id);
       volunteer.pendingCompanies = volunteer.pendingCompanies.filter(companyId => companyId.toString() !== request.company._id.toString());
       return volunteer.save();
     })
     .then(volunteer => {
+      request.volunteerPhoneNumber = volunteer.phoneNumber;
       request.company.activeVolunteers.push(volunteer._id);
       request.company.pendingVolunteers = request.company.pendingVolunteers.filter(volunteerId => volunteerId.toString() !== volunteer._id.toString());
       return request.company.save();
     })
     .then(company => {
-      return Company.findById(company._id)
+      request.companyId = company._id;
+      return client.messages.create({
+        to: request.volunteerPhoneNumber,
+        from: process.env.TWILIO_PHONE_NUMBER,
+        body: `Congratulations ${request.body.volunteerFirstName}, you've been accepted as a volunteer by ${company.companyName}!`,
+      });
+    })
+    .then(message => {
+      logger.info(`${message.sid}: message sent to ${request.volunteerPhoneNumber}`);
+      data.sid = message.sid;
+      return Company.findById(request.companyId)
         .populate('pendingVolunteers')
         .populate('activeVolunteers');
     })
-    .then(company => response.json(company.getCensoredVolunteers()))
+    .then(company => {
+      data = {
+        sid : data.sid,
+        ...company.getCensoredVolunteers(),
+      };
+      return response.json(data);
+    })
     .catch(next);
 });
 

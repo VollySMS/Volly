@@ -3,7 +3,6 @@
 require('./lib/setup');
 const faker = require('faker');
 const superagent = require('superagent');
-
 const server = require('../lib/server');
 const volunteerMockFactory = require('./lib/volunteer-mock-factory');
 const Company = require('../model/company');
