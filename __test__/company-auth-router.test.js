@@ -24,11 +24,26 @@ describe('company-auth-router.js', () => {
           password: faker.internet.password(),
           email: faker.internet.email(),
           phoneNumber: faker.phone.phoneNumber(),
-          website: faker.internet.url(),    
+          website: faker.internet.url(),
         })
         .then(response => {
           expect(response.status).toEqual(200);
           expect(response.body.token).toBeTruthy();
+        });
+    });
+
+    test('creating an account should respond with a 400 if an invalid email is sent', () => {
+      return superagent.post(`${process.env.API_URL}/company/signup`)
+        .send({
+          companyName: faker.company.companyName(),
+          password: faker.internet.password(),
+          email: 'invalid email',
+          phoneNumber: faker.phone.phoneNumber(),
+          website: faker.internet.url(),
+        })
+        .then(Promise.reject)
+        .catch(response => {
+          expect(response.status).toEqual(400);
         });
     });
 
@@ -56,7 +71,7 @@ describe('company-auth-router.js', () => {
               password: faker.internet.password(),
               email: faker.internet.email(),
               phoneNumber: faker.phone.phoneNumber(),
-              website: faker.internet.url(),    
+              website: faker.internet.url(),
             });
         })
         .then(Promise.reject)
@@ -72,7 +87,7 @@ describe('company-auth-router.js', () => {
           password: faker.internet.password(),
           email: faker.internet.email(),
           phoneNumber: faker.phone.phoneNumber(),
-          website: faker.internet.url(),    
+          website: faker.internet.url(),
         })
         .then(Promise.reject)
         .catch(response => {
@@ -91,7 +106,7 @@ describe('company-auth-router.js', () => {
           })
           .then( response => {
             expect(response.status).toEqual(200);
-            expect(response.body.token).toBeTruthy(); 
+            expect(response.body.token).toBeTruthy();
           });
       });
 
@@ -156,7 +171,7 @@ describe('company-auth-router.js', () => {
     });
 
     describe('GET /company/pending', () => {
-      test('should return a 200 if pending volunteers are successfully found', () => { 
+      test('should return a 200 if pending volunteers are successfully found', () => {
         let mock = {};
         return volunteerMockFactory.createAndAddPending()
           .then(mockData => {
@@ -178,7 +193,7 @@ describe('company-auth-router.js', () => {
     });
 
     describe('GET /company/active', () => {
-      test('should return a 200 if active volunteers are successfully found', () => { 
+      test('should return a 200 if active volunteers are successfully found', () => {
         let mock = {};
         return volunteerMockFactory.createAndAddActive()
           .then(mockData => {
@@ -217,7 +232,7 @@ describe('company-auth-router.js', () => {
               .set('Authorization', `Bearer ${mock.token}`)
               .send(newData);
           })
-          .then(response => {            
+          .then(response => {
             expect(response.body.companyName).toEqual(newData.companyName);
             expect(response.body.email).toEqual(newData.email);
             expect(response.body.phoneNumber).toEqual(newData.phoneNumber);
@@ -225,7 +240,7 @@ describe('company-auth-router.js', () => {
             expect(response.body.token).toBeTruthy();
             expect(response.status).toEqual(200);
           });
-      }); 
+      });
       test('if companyName or password is not updated, there should not be a new token', () => {
         return companyMockFactory.create()
           .then(mock => {
@@ -233,11 +248,11 @@ describe('company-auth-router.js', () => {
               .set('Authorization', `Bearer ${mock.token}`)
               .send({email: faker.internet.email()});
           })
-          .then(response => {            
+          .then(response => {
             expect(response.body.token).toBeFalsy();
             expect(response.status).toEqual(200);
           });
-      }); 
+      });
       test('if no valid property is sent, 400 status code is returned', () => {
         return companyMockFactory.create()
           .then(mock => {
@@ -245,18 +260,18 @@ describe('company-auth-router.js', () => {
               .set('Authorization', `Bearer ${mock.token}`);
           })
           .then(Promise.reject)
-          .catch(response => {            
+          .catch(response => {
             expect(response.status).toEqual(400);
           });
-      }); 
+      });
     });
 
     describe('PUT /company/approve', () => {
-      test('should return object with active and pending volunteers arrays', () => { 
+      test('should return object with active and pending volunteers arrays', () => {
         let mock = {};
         return volunteerMockFactory.createAndAddPending()
           .then(mockData => {
-            mock = mockData;            
+            mock = mockData;
             return superagent.put(`${process.env.API_URL}/company/approve`)
               .set('Authorization', `Bearer ${mock.companyToken}`)
               .send({volunteerId: mock.volunteer._id});
@@ -279,11 +294,11 @@ describe('company-auth-router.js', () => {
           });
       });
 
-      test('should return 404 if there is no pending volunteer with provided ID', () => { 
+      test('should return 404 if there is no pending volunteer with provided ID', () => {
         let mock = {};
         return volunteerMockFactory.createAndAddPending()
           .then(mockData => {
-            mock = mockData;            
+            mock = mockData;
             return superagent.put(`${process.env.API_URL}/company/approve`)
               .set('Authorization', `Bearer ${mock.companyToken}`)
               .send({volunteerId: '5a4bc01dcf40590014e07350'});
@@ -296,7 +311,7 @@ describe('company-auth-router.js', () => {
     });
 
     describe('PUT /company/terminate', () => {
-      test('should return a 200 if pending volunteer is successfully removed', () => { 
+      test('should return a 200 if pending volunteer is successfully removed', () => {
         let mock = {};
         return volunteerMockFactory.createAndAddPending()
           .then(mockData => {
@@ -323,7 +338,7 @@ describe('company-auth-router.js', () => {
           });
       });
 
-      test('should return a 200 if active volunteer is successfully terminated', () => { 
+      test('should return a 200 if active volunteer is successfully terminated', () => {
         let mock = {};
         return volunteerMockFactory.createAndAddActive()
           .then(mockData => {
@@ -350,7 +365,7 @@ describe('company-auth-router.js', () => {
           });
       });
 
-      test('should return a 400 if volunteer ID is missing', () => { 
+      test('should return a 400 if volunteer ID is missing', () => {
         return volunteerMockFactory.createAndAddPending()
           .then(mock => {
             return superagent.put(`${process.env.API_URL}/company/terminate`)
@@ -362,7 +377,7 @@ describe('company-auth-router.js', () => {
           });
       });
 
-      test('should return a 404 if no volunteer with provided ID is found', () => { 
+      test('should return a 404 if no volunteer with provided ID is found', () => {
         return volunteerMockFactory.createAndAddPending()
           .then(mock => {
             return superagent.put(`${process.env.API_URL}/company/terminate`)
