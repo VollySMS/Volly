@@ -24,7 +24,7 @@ describe('volunteer-auth-router.js', () => {
             userName: faker.company.companyName(),
             password: faker.internet.password(),
             email: faker.internet.email(),
-            phoneNumber: '+1' + faker.phone.phoneNumber().split('x')[0].replace(/\D/g, ''),
+            phoneNumber: '+17787471077',
           })
           .then(response => {
             expect(response.status).toEqual(200);
@@ -40,7 +40,7 @@ describe('volunteer-auth-router.js', () => {
             userName: faker.company.companyName(),
             password: faker.internet.password(),
             email: 'invalid email',
-            phoneNumber: '+1' + faker.phone.phoneNumber().split('x')[0].replace(/\D/g, ''),
+            phoneNumber: '+17787471077',
           })
           .then(Promise.reject)
           .catch(response => {
@@ -72,7 +72,7 @@ describe('volunteer-auth-router.js', () => {
                 userName: volunteer.userName,
                 password: faker.internet.password(),
                 email: faker.internet.email(),
-                phoneNumber: '+1' + faker.phone.phoneNumber().split('x')[0].replace(/\D/g, ''),
+                phoneNumber: '+17787471077',
               });
           })
           .then(Promise.reject)
@@ -89,7 +89,7 @@ describe('volunteer-auth-router.js', () => {
             userName: faker.company.companyName(),
             password: faker.internet.password(),
             email: faker.internet.email(),
-            phoneNumber: '+1' + faker.phone.phoneNumber().split('x')[0].replace(/\D/g, ''),
+            phoneNumber: '+17787471077',
           })
           .then(Promise.reject)
           .catch(response => {
@@ -255,7 +255,7 @@ describe('volunteer-auth-router.js', () => {
               userName: faker.company.companyName(),
               password: faker.internet.password(),
               email: faker.internet.email(),
-              phoneNumber: '+1' + faker.phone.phoneNumber().split('x')[0].replace(/\D/g, ''),
+              phoneNumber: '+17787471077',
             };
             return superagent.put(`${process.env.API_URL}/volunteer/update`)
               .set('Authorization', `Bearer ${mock.token}`)

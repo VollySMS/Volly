@@ -14,7 +14,7 @@ volunteerMockFactory.create = () => {
     userName: faker.company.companyName(),
     password: faker.internet.password(),
     email: faker.internet.email(),
-    phoneNumber: '+1' + faker.phone.phoneNumber().split('x')[0].replace(/\D/g, ''),
+    phoneNumber: '+17787471077',
   };
   return Volunteer.create(mock.request.firstName, mock.request.lastName, mock.request.userName, mock.request.password, mock.request.email, mock.request.phoneNumber)
     .then(volunteer => {
