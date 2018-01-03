@@ -11,8 +11,8 @@ companyMockFactory.create = () => {
     companyName: faker.company.companyName(),
     password: faker.internet.password(),
     email: faker.internet.email(),
-    phoneNumber: faker.phone.phoneNumber(),
-    website: faker.internet.url(),    
+    phoneNumber: '+17787471077',
+    website: faker.internet.url(),
   };
   return Company.create(mock.request.companyName, mock.request.password, mock.request.email, mock.request.phoneNumber, mock.request.website)
     .then(company => {

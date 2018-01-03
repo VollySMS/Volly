@@ -4,7 +4,6 @@ require('./lib/setup');
 
 const faker = require('faker');
 const superagent = require('superagent');
-
 const server = require('../lib/server');
 const Volunteer = require('../model/volunteer');
 const Company = require('../model/company');
@@ -23,7 +22,7 @@ describe('company-auth-router.js', () => {
           companyName: faker.company.companyName(),
           password: faker.internet.password(),
           email: faker.internet.email(),
-          phoneNumber: faker.phone.phoneNumber(),
+          phoneNumber: '+17787471077',
           website: faker.internet.url(),
         })
         .then(response => {
@@ -38,7 +37,7 @@ describe('company-auth-router.js', () => {
           companyName: faker.company.companyName(),
           password: faker.internet.password(),
           email: 'invalid email',
-          phoneNumber: faker.phone.phoneNumber(),
+          phoneNumber: '+17787471077',
           website: faker.internet.url(),
         })
         .then(Promise.reject)
@@ -52,7 +51,7 @@ describe('company-auth-router.js', () => {
         .send({
           password: faker.internet.password(),
           email: faker.internet.email(),
-          phoneNumber: faker.phone.phoneNumber(),
+          phoneNumber: '+17787471077',
         })
         .then(Promise.reject)
         .catch(response => {
@@ -85,7 +84,7 @@ describe('company-auth-router.js', () => {
               companyName: company.companyName,
               password: faker.internet.password(),
               email: faker.internet.email(),
-              phoneNumber: faker.phone.phoneNumber(),
+              phoneNumber: '+17787471077',
               website: faker.internet.url(),
             });
         })
@@ -101,7 +100,7 @@ describe('company-auth-router.js', () => {
           companyName: faker.company.companyName(),
           password: faker.internet.password(),
           email: faker.internet.email(),
-          phoneNumber: faker.phone.phoneNumber(),
+          phoneNumber: '+17787471077',
           website: faker.internet.url(),
         })
         .then(Promise.reject)
@@ -240,7 +239,7 @@ describe('company-auth-router.js', () => {
               companyName: faker.company.companyName(),
               password: faker.internet.password(),
               email: faker.internet.email(),
-              phoneNumber: faker.phone.phoneNumber(),
+              phoneNumber: '+17787471077',
               website: faker.internet.url(),
             };
             return superagent.put(`${process.env.API_URL}/company/update`)
@@ -292,6 +291,7 @@ describe('company-auth-router.js', () => {
               .send({volunteerId: mock.volunteer._id});
           })
           .then(response => {
+            expect(response.body.sid).toBeTruthy();
             expect(response.status).toEqual(200);
             expect(response.body.activeVolunteers[0]).toEqual({
               volunteerId: mock.volunteer._id.toString(),
@@ -306,6 +306,19 @@ describe('company-auth-router.js', () => {
           .then(volunteer => {
             expect(volunteer.pendingCompanies.length).toEqual(0);
             expect(volunteer.activeCompanies[0]).toEqual(mock.company._id);
+          });
+      });
+
+      test('should return 404 if the volunteer does not exist in pending', () => {
+        return companyMockFactory.create()
+          .then(mock => {
+            return superagent.put(`${process.env.API_URL}/company/approve`)
+              .set('Authorization', `Bearer ${mock.token}`)
+              .send({volunteerId: '5a4bc01dcf40590014e07351'});
+          })
+          .then(Promise.reject)
+          .catch(response => {
+            expect(response.status).toEqual(404);
           });
       });
 

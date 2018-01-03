@@ -3,7 +3,6 @@
 require('./lib/setup');
 const faker = require('faker');
 const superagent = require('superagent');
-
 const server = require('../lib/server');
 const volunteerMockFactory = require('./lib/volunteer-mock-factory');
 const Company = require('../model/company');
@@ -25,7 +24,7 @@ describe('volunteer-auth-router.js', () => {
             userName: faker.company.companyName(),
             password: faker.internet.password(),
             email: faker.internet.email(),
-            phoneNumber: faker.phone.phoneNumber(),
+            phoneNumber: '+17787471077',
           })
           .then(response => {
             expect(response.status).toEqual(200);
@@ -41,7 +40,7 @@ describe('volunteer-auth-router.js', () => {
             userName: faker.company.companyName(),
             password: faker.internet.password(),
             email: 'invalid email',
-            phoneNumber: faker.phone.phoneNumber(),
+            phoneNumber: '+17787471077',
           })
           .then(Promise.reject)
           .catch(response => {
@@ -73,7 +72,7 @@ describe('volunteer-auth-router.js', () => {
                 userName: volunteer.userName,
                 password: faker.internet.password(),
                 email: faker.internet.email(),
-                phoneNumber: faker.phone.phoneNumber(),
+                phoneNumber: '+17787471077',
               });
           })
           .then(Promise.reject)
@@ -90,7 +89,7 @@ describe('volunteer-auth-router.js', () => {
             userName: faker.company.companyName(),
             password: faker.internet.password(),
             email: faker.internet.email(),
-            phoneNumber: faker.phone.phoneNumber(),
+            phoneNumber: '+17787471077',
           })
           .then(Promise.reject)
           .catch(response => {
@@ -256,7 +255,7 @@ describe('volunteer-auth-router.js', () => {
               userName: faker.company.companyName(),
               password: faker.internet.password(),
               email: faker.internet.email(),
-              phoneNumber: faker.phone.phoneNumber(),
+              phoneNumber: '+17787471077',
             };
             return superagent.put(`${process.env.API_URL}/volunteer/update`)
               .set('Authorization', `Bearer ${mock.token}`)
