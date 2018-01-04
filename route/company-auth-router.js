@@ -13,7 +13,6 @@ const bearerAuthCompany = require('../lib/bearer-auth-middleware')(Company);
 const companyAuthRouter = module.exports = new Router();
 
 companyAuthRouter.post('/company/signup', jsonParser, (request, response, next) => {
-
   let filter = /^.+@.+\..+$/;
 
   if(!request.body.companyName || !request.body.password || !request.body.email || !request.body.phoneNumber || !request.body.website)
@@ -25,6 +24,29 @@ companyAuthRouter.post('/company/signup', jsonParser, (request, response, next) 
   return Company.create(request.body.companyName, request.body.password, request.body.email, request.body.phoneNumber, request.body.website)
     .then(company => company.createToken())
     .then(token => response.json({token}))
+    .catch(next);
+});
+
+companyAuthRouter.post('/company/send-sms', bearerAuthCompany, jsonParser, (request, response, next) => {
+  if(!request.body.textMessage || !request.body.volunteers || !Array.isArray(request.body.volunteers || !request.body.volunteers.length))
+    return next(new httpErrors(400, '__ERROR__ <textMessage> and <volunteers> (array) are required, and volunteers must not be empty.'));
+
+  let volunteers = {};
+  request.company.pendingVolunteers.concat(request.company.activeVolunteers)
+    .forEach(volunteerId => volunteers[volunteerId.toString()] = true);
+
+  for(let volunteerId of request.body.volunteers) {
+    if(!volunteers[volunteerId.toString()])
+      return next(new httpErrors(404, `${volunteerId} not in company`));
+  }
+
+  return Promise.all(request.body.volunteers.map(volunteerId => Volunteer.findById(volunteerId)))
+    .then(volunteers => Promise.all(volunteers.map(volunteer => client.messages.create({
+      to: volunteer.phoneNumber,
+      from: process.env.TWILIO_PHONE_NUMBER,
+      body: request.body.textMessage,
+    }))))
+    .then(() => response.sendStatus(200))
     .catch(next);
 });
 
