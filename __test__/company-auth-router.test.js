@@ -378,7 +378,7 @@ describe('company-auth-router.js', () => {
               companyName: faker.company.companyName(),
               password: faker.internet.password(),
               email: faker.internet.email(),
-              phoneNumber: '+17787471077',
+              phoneNumber: '(778) 747-1077',
               website: faker.internet.url(),
             };
             return superagent.put(`${process.env.API_URL}/company/update`)
@@ -388,7 +388,7 @@ describe('company-auth-router.js', () => {
           .then(response => {
             expect(response.body.companyName).toEqual(newData.companyName);
             expect(response.body.email).toEqual(newData.email);
-            expect(response.body.phoneNumber).toEqual(newData.phoneNumber);
+            expect(response.body.phoneNumber).toEqual('+17787471077');
             expect(response.body.website).toEqual(newData.website);
             expect(response.body.token).toBeTruthy();
             expect(response.status).toEqual(200);

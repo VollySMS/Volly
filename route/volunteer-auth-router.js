@@ -69,6 +69,15 @@ volunteerAuthRouter.put('/volunteer/update', bearerAuthVolunteer, jsonParser, (r
   if(!(request.body.userName || request.body.password || request.body.email || request.body.phoneNumber || request.body.firstName || request.body.lastName))
     return next(new httpErrors(400, '__ERROR__ <userName>, <email>, <phoneNumber>, <firstName>, <lastName> or <password> are required to update volunteer info'));
 
+  if(request.body.phoneNumber) {
+    let formattedPhoneNumber = phoneNumber.verifyPhoneNumber(request.body.phoneNumber);
+  
+    if(!formattedPhoneNumber)
+      return next(new httpErrors(400, '__ERROR__ invalid phone number'));
+    
+    request.body.phoneNumber = formattedPhoneNumber;
+  }
+
   let data = {};
   for(let prop of Object.keys(request.body)){
     if(request.volunteer[prop])
