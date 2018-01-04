@@ -9,6 +9,7 @@ const Volunteer = require('../model/volunteer');
 const logger = require('../lib/logger');
 const basicAuthCompany = require('../lib/basic-auth-middleware')(Company);
 const bearerAuthCompany = require('../lib/bearer-auth-middleware')(Company);
+const phoneNumber = require('../lib/phone-number');
 
 const companyAuthRouter = module.exports = new Router();
 
@@ -20,6 +21,11 @@ companyAuthRouter.post('/company/signup', jsonParser, (request, response, next) 
 
   if(!filter.test(request.body.email))
     return next(new httpErrors(400, '__ERROR__ valid email required'));
+
+  let formattedPhoneNumber = phoneNumber.verifyPhoneNumber(request.body.phoneNumber);
+
+  if(!formattedPhoneNumber)
+    return next(new httpErrors(400, '__ERROR__ invalid phone number'));
 
   return Company.create(request.body.companyName, request.body.password, request.body.email, request.body.phoneNumber, request.body.website)
     .then(company => company.createToken())

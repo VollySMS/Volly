@@ -31,6 +31,51 @@ describe('company-auth-router.js', () => {
             expect(response.body.token).toBeTruthy();
           });
       });
+
+      test('creating an account should respond with a 400 if an invalid 11 digit phone number is used', () => {
+        return superagent.post(`${process.env.API_URL}/company/signup`)
+          .send({
+            companyName: faker.company.companyName(),
+            password: faker.internet.password(),
+            email: faker.internet.email(),
+            phoneNumber: '+11787471077',
+            website: faker.internet.url(),
+          })
+          .then(Promise.reject)
+          .catch(response => {
+            expect(response.status).toEqual(400);
+          });
+      });
+
+      test('creating an account should respond with a 400 if an invalid 10 digit phone number is used', () => {
+        return superagent.post(`${process.env.API_URL}/company/signup`)
+          .send({
+            companyName: faker.company.companyName(),
+            password: faker.internet.password(),
+            email: faker.internet.email(),
+            phoneNumber: '1787471077',
+            website: faker.internet.url(),
+          })
+          .then(Promise.reject)
+          .catch(response => {
+            expect(response.status).toEqual(400);
+          });
+      });
+
+      test('creating an account should respond with a 400 if phone number cannot be coerced into a useable form', () => {
+        return superagent.post(`${process.env.API_URL}/company/signup`)
+          .send({
+            companyName: faker.company.companyName(),
+            password: faker.internet.password(),
+            email: faker.internet.email(),
+            phoneNumber: '+11787471077089',
+            website: faker.internet.url(),
+          })
+          .then(Promise.reject)
+          .catch(response => {
+            expect(response.status).toEqual(400);
+          });
+      });
   
       test('creating an account should respond with a 400 if an invalid email is sent', () => {
         return superagent.post(`${process.env.API_URL}/company/signup`)
@@ -66,7 +111,7 @@ describe('company-auth-router.js', () => {
             companyName: {},
             password: faker.internet.password(),
             email: faker.internet.email(), 
-            phoneNumber: faker.phone.phoneNumber(),
+            phoneNumber: '+17787471077',
             website: faker.internet.url(),
           })
           .then(Promise.reject)
@@ -568,7 +613,7 @@ describe('company-auth-router.js', () => {
           companyName: faker.company.companyName(),          
           password: faker.internet.password(),
           email: faker.internet.email(), 
-          phoneNumber: faker.phone.phoneNumber(),
+          phoneNumber: '+17787471077',
           website: faker.internet.url(),
         })
         .then(Promise.reject)
