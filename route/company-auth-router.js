@@ -13,7 +13,6 @@ const bearerAuthCompany = require('../lib/bearer-auth-middleware')(Company);
 const companyAuthRouter = module.exports = new Router();
 
 companyAuthRouter.post('/company/signup', jsonParser, (request, response, next) => {
-
   let filter = /^.+@.+\..+$/;
 
   if(!request.body.companyName || !request.body.password || !request.body.email || !request.body.phoneNumber || !request.body.website)
@@ -25,6 +24,29 @@ companyAuthRouter.post('/company/signup', jsonParser, (request, response, next) 
   return Company.create(request.body.companyName, request.body.password, request.body.email, request.body.phoneNumber, request.body.website)
     .then(company => company.createToken())
     .then(token => response.json({token}))
+    .catch(next);
+});
+
+companyAuthRouter.post('/company/send-sms', bearerAuthCompany, jsonParser, (request, response, next) => {
+  if(!request.body.textMessage || !request.body.volunteers || !Array.isArray(request.body.volunteers) || !request.body.volunteers.length)
+    return next(new httpErrors(400, '__ERROR__ <textMessage> and <volunteers> (array) are required, and volunteers must not be empty.'));
+
+  let volunteers = {};
+  request.company.pendingVolunteers.concat(request.company.activeVolunteers)
+    .forEach(volunteerId => volunteers[volunteerId.toString()] = true);
+
+  for(let volunteerId of request.body.volunteers) {
+    if(!volunteers[volunteerId.toString()])
+      return next(new httpErrors(404, `${volunteerId} not in company`));
+  }
+
+  return Promise.all(request.body.volunteers.map(volunteerId => Volunteer.findById(volunteerId)))
+    .then(volunteers => Promise.all(volunteers.map(volunteer => client.messages.create({
+      to: volunteer.phoneNumber,
+      from: process.env.TWILIO_PHONE_NUMBER,
+      body: request.body.textMessage,
+    }))))
+    .then(() => response.sendStatus(200))
     .catch(next);
 });
 
@@ -77,7 +99,9 @@ companyAuthRouter.put('/company/update', bearerAuthCompany, jsonParser, (request
 });
 
 companyAuthRouter.put('/company/approve', bearerAuthCompany, jsonParser, (request, response, next) => {
-  let data = {};
+  if(!request.body.volunteerId)
+    return next(new httpErrors(400, '<volunteerId> is required.'));
+
   if(!request.company.pendingVolunteers.map(volunteerId => volunteerId.toString()).includes(request.body.volunteerId))
     return next(new httpErrors(404, '__ERROR__ volunteer does not exist in pending volunteers'));
 
@@ -104,18 +128,11 @@ companyAuthRouter.put('/company/approve', bearerAuthCompany, jsonParser, (reques
     })
     .then(message => {
       logger.info(`${message.sid}: message sent to ${request.volunteerPhoneNumber}`);
-      data.sid = message.sid;
       return Company.findById(request.companyId)
         .populate('pendingVolunteers')
         .populate('activeVolunteers');
     })
-    .then(company => {
-      data = {
-        sid : data.sid,
-        ...company.getCensoredVolunteers(),
-      };
-      return response.json(data);
-    })
+    .then(company => response.json(company.getCensoredVolunteers()))
     .catch(next);
 });
 
@@ -123,13 +140,21 @@ companyAuthRouter.put('/company/terminate', bearerAuthCompany, jsonParser, (requ
   if(!request.body.volunteerId)
     return next(new httpErrors(400, '__ERROR__ volunteer id is required'));
 
+  if(!request.company.activeVolunteers
+    .concat(request.company.pendingVolunteers)
+    .map(volunteerId => volunteerId.toString())
+    .includes(request.body.volunteerId.toString()))
+    throw new httpErrors(404, '__ERROR__ volunteer not found.');
+
+  let inPending = null;
+
   return Volunteer.findById(request.body.volunteerId)
     .then(volunteer => {
-      if(!volunteer)
-        throw new httpErrors(404, '__ERROR__ volunteer not found.');
-
+      request.volunteerPhoneNumber = volunteer.phoneNumber;
+      inPending = volunteer.pendingCompanies.length;
       volunteer.activeCompanies = volunteer.activeCompanies.filter(companyId => companyId.toString() !== request.company._id.toString());
       volunteer.pendingCompanies = volunteer.pendingCompanies.filter(companyId => companyId.toString() !== request.company._id.toString());
+      inPending = inPending === volunteer.pendingCompanies.length ? false : true;
 
       return volunteer.save();
     })
@@ -139,7 +164,15 @@ companyAuthRouter.put('/company/terminate', bearerAuthCompany, jsonParser, (requ
       return request.company.save();
     })
     .then(company => {
-      return Company.findById(company._id)
+      request.companyId = company._id;
+      return client.messages.create({
+        to: request.volunteerPhoneNumber,
+        from: process.env.TWILIO_PHONE_NUMBER,
+        body: inPending ? `Thank you for your interest in ${request.company.companyName}. At this time we have decided to pursue other candidates.` : `Thank you for supporting ${request.company.companyName}. You have been removed from our volunteer list.`,
+      });
+    })
+    .then(() => {
+      return Company.findById(request.companyId)
         .populate('pendingVolunteers')
         .populate('activeVolunteers');
     })
@@ -167,7 +200,7 @@ companyAuthRouter.delete('/company/delete', bearerAuthCompany, (request, respons
         return volunteer.save();
       }));
     })
-    .then(() => Company.remove({}))
+    .then(() => Company.findByIdAndRemove(request.company._id))
     .then(() => response.sendStatus(204))
     .catch(next);
 });

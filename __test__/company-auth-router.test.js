@@ -15,98 +15,192 @@ describe('company-auth-router.js', () => {
   afterAll(server.stop);
   afterEach(volunteerMockFactory.remove);
 
-  describe('POST /company/signup', () => {
-    test('creating an account should respond with a 200 status and a token', () => {
-      return superagent.post(`${process.env.API_URL}/company/signup`)
-        .send({
-          companyName: faker.company.companyName(),
-          password: faker.internet.password(),
-          email: faker.internet.email(),
-          phoneNumber: '+17787471077',
-          website: faker.internet.url(),
-        })
-        .then(response => {
-          expect(response.status).toEqual(200);
-          expect(response.body.token).toBeTruthy();
-        });
+  describe('POST', () => {
+    describe('POST /company/signup', () => {
+      test('creating an account should respond with a 200 status and a token', () => {
+        return superagent.post(`${process.env.API_URL}/company/signup`)
+          .send({
+            companyName: faker.company.companyName(),
+            password: faker.internet.password(),
+            email: faker.internet.email(),
+            phoneNumber: '+17787471077',
+            website: faker.internet.url(),
+          })
+          .then(response => {
+            expect(response.status).toEqual(200);
+            expect(response.body.token).toBeTruthy();
+          });
+      });
+  
+      test('creating an account should respond with a 400 if an invalid email is sent', () => {
+        return superagent.post(`${process.env.API_URL}/company/signup`)
+          .send({
+            companyName: faker.company.companyName(),
+            password: faker.internet.password(),
+            email: 'invalid email',
+            phoneNumber: '+17787471077',
+            website: faker.internet.url(),
+          })
+          .then(Promise.reject)
+          .catch(response => {
+            expect(response.status).toEqual(400);
+          });
+      });
+  
+      test('creating an account should respond with a 400 if a required field is missing', () => {
+        return superagent.post(`${process.env.API_URL}/company/signup`)
+          .send({
+            password: faker.internet.password(),
+            email: faker.internet.email(),
+            phoneNumber: '+17787471077',
+          })
+          .then(Promise.reject)
+          .catch(response => {
+            expect(response.status).toEqual(400);
+          });
+      });
+  
+      test('creating an account should respond with a 400 if an incorrect type is sent', () => {
+        return superagent.post(`${process.env.API_URL}/company/signup`)
+          .send({
+            companyName: {},
+            password: faker.internet.password(),
+            email: faker.internet.email(), 
+            phoneNumber: faker.phone.phoneNumber(),
+            website: faker.internet.url(),
+          })
+          .then(Promise.reject)
+          .catch(response => {
+            expect(response.status).toEqual(400);
+          });
+      });
+  
+      test('creating an account with duplicate information should return a 409', () => {
+        let company = null;
+        return companyMockFactory.create()
+          .then(mock => {
+            company = mock.company;
+            return superagent.post(`${process.env.API_URL}/company/signup`)
+              .send({
+                companyName: company.companyName,
+                password: faker.internet.password(),
+                email: faker.internet.email(),
+                phoneNumber: '+17787471077',
+                website: faker.internet.url(),
+              });
+          })
+          .then(Promise.reject)
+          .catch(response => {
+            expect(response.status).toEqual(409);
+          });
+      });
+  
+      test('should respond with a 404 status if a bad endpoint is hit', () => {
+        return superagent.post(`${process.env.API_URL}/bad-path`)
+          .send({
+            companyName: faker.company.companyName(),
+            password: faker.internet.password(),
+            email: faker.internet.email(),
+            phoneNumber: '+17787471077',
+            website: faker.internet.url(),
+          })
+          .then(Promise.reject)
+          .catch(response => {
+            expect(response.status).toEqual(404);
+          });
+      });
     });
 
-    test('creating an account should respond with a 400 if an invalid email is sent', () => {
-      return superagent.post(`${process.env.API_URL}/company/signup`)
-        .send({
-          companyName: faker.company.companyName(),
-          password: faker.internet.password(),
-          email: 'invalid email',
-          phoneNumber: '+17787471077',
-          website: faker.internet.url(),
-        })
-        .then(Promise.reject)
-        .catch(response => {
-          expect(response.status).toEqual(400);
-        });
-    });
+    describe('POST /company/send-sms', () => {
+      test('should return a 200 once all volunteers are sent a message', () => {
+        return volunteerMockFactory.createAndAddPending()
+          .then(mock => {
+            return superagent.post(`${process.env.API_URL}/company/send-sms`)
+              .set('Authorization', `Bearer ${mock.companyToken}`)
+              .send({
+                textMessage: faker.random.words(20),
+                volunteers: [mock.volunteer._id],
+              });
+          })
+          .then(response => {
+            expect(response.status).toEqual(200);
+          });
+      });
 
-    test('creating an account should respond with a 400 if a required field is missing', () => {
-      return superagent.post(`${process.env.API_URL}/company/signup`)
-        .send({
-          password: faker.internet.password(),
-          email: faker.internet.email(),
-          phoneNumber: '+17787471077',
-        })
-        .then(Promise.reject)
-        .catch(response => {
-          expect(response.status).toEqual(400);
-        });
-    });
+      test('should return a 400 if request data is missing', () => {
+        return volunteerMockFactory.createAndAddPending()
+          .then(mock => {
+            return superagent.post(`${process.env.API_URL}/company/send-sms`)
+              .set('Authorization', `Bearer ${mock.companyToken}`);
+          })
+          .then(Promise.reject)
+          .catch(response => {
+            expect(response.status).toEqual(400);
+          });
+      });
 
-    test('creating an account should respond with a 400 if an incorrect type is sent', () => {
-      return superagent.post(`${process.env.API_URL}/company/signup`)
-        .send({
-          companyName: {},
-          password: faker.internet.password(),
-          email: faker.internet.email(), 
-          phoneNumber: faker.phone.phoneNumber(),
-          website: faker.internet.url(),
-        })
-        .then(Promise.reject)
-        .catch(response => {
-          expect(response.status).toEqual(400);
-        });
-    });
+      test('should return a 400 if request is missing the volunteers array', () => {
+        return volunteerMockFactory.createAndAddPending()
+          .then(mock => {
+            return superagent.post(`${process.env.API_URL}/company/send-sms`)
+              .set('Authorization', `Bearer ${mock.companyToken}`)
+              .send({
+                textMessage: faker.random.words(20),
+              });
+          })
+          .then(Promise.reject)
+          .catch(response => {
+            expect(response.status).toEqual(400);
+          });
+      });
 
-    test('creating an account with duplicate information should return a 409', () => {
-      let company = null;
-      return companyMockFactory.create()
-        .then(mock => {
-          company = mock.company;
-          return superagent.post(`${process.env.API_URL}/company/signup`)
-            .send({
-              companyName: company.companyName,
-              password: faker.internet.password(),
-              email: faker.internet.email(),
-              phoneNumber: '+17787471077',
-              website: faker.internet.url(),
-            });
-        })
-        .then(Promise.reject)
-        .catch(response => {
-          expect(response.status).toEqual(409);
-        });
-    });
+      test('should return a 400 if request array is not of type array', () => {
+        return volunteerMockFactory.createAndAddPending()
+          .then(mock => {
+            return superagent.post(`${process.env.API_URL}/company/send-sms`)
+              .set('Authorization', `Bearer ${mock.companyToken}`)
+              .send({
+                textMessage: faker.random.words(20),
+                volunteers: mock.volunteer._id,                
+              });
+          })
+          .then(Promise.reject)
+          .catch(response => {
+            expect(response.status).toEqual(400);
+          });
+      });
 
-    test('should respond with a 404 status if a bad endpoint is hit', () => {
-      return superagent.post(`${process.env.API_URL}/bad-path`)
-        .send({
-          companyName: faker.company.companyName(),
-          password: faker.internet.password(),
-          email: faker.internet.email(),
-          phoneNumber: '+17787471077',
-          website: faker.internet.url(),
-        })
-        .then(Promise.reject)
-        .catch(response => {
-          expect(response.status).toEqual(404);
-        });
+      test('should return a 400 if request array is empty', () => {
+        return volunteerMockFactory.createAndAddPending()
+          .then(mock => {
+            return superagent.post(`${process.env.API_URL}/company/send-sms`)
+              .set('Authorization', `Bearer ${mock.companyToken}`)
+              .send({
+                textMessage: faker.random.words(20),
+                volunteers: [],                
+              });
+          })
+          .then(Promise.reject)
+          .catch(response => {
+            expect(response.status).toEqual(400);
+          });
+      });
+
+      test('should return a 404 if a volunteer in the array is not in either of the company\'s volunteer arrays', () => {
+        return volunteerMockFactory.createAndAddPending()
+          .then(mock => {
+            return superagent.post(`${process.env.API_URL}/company/send-sms`)
+              .set('Authorization', `Bearer ${mock.companyToken}`)
+              .send({
+                textMessage: faker.random.words(20),
+                volunteers: ['not a real volunteer'],
+              });
+          })
+          .then(Promise.reject)
+          .catch(response => {
+            expect(response.status).toEqual(404);
+          });
+      });
     });
   });
 
@@ -291,7 +385,6 @@ describe('company-auth-router.js', () => {
               .send({volunteerId: mock.volunteer._id});
           })
           .then(response => {
-            expect(response.body.sid).toBeTruthy();
             expect(response.status).toEqual(200);
             expect(response.body.activeVolunteers[0]).toEqual({
               volunteerId: mock.volunteer._id.toString(),
@@ -319,6 +412,18 @@ describe('company-auth-router.js', () => {
           .then(Promise.reject)
           .catch(response => {
             expect(response.status).toEqual(404);
+          });
+      });
+      
+      test('should return 400 if no volunteerId is sent', () => {
+        return companyMockFactory.create()
+          .then(mock => {
+            return superagent.put(`${process.env.API_URL}/company/approve`)
+              .set('Authorization', `Bearer ${mock.token}`);
+          })
+          .then(Promise.reject)
+          .catch(response => {
+            expect(response.status).toEqual(400);
           });
       });
     });

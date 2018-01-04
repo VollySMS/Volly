@@ -166,7 +166,7 @@ volunteerAuthRouter.delete('/volunteer/delete', bearerAuthVolunteer, (request, r
         return company.save();
       }));
     })
-    .then(() => Volunteer.remove({}))
+    .then(() => Volunteer.findByIdAndRemove(request.volunteer._id))
     .then(() => response.sendStatus(204))
     .catch(next);
 });
