@@ -28,7 +28,7 @@ companyAuthRouter.post('/company/signup', jsonParser, (request, response, next) 
 });
 
 companyAuthRouter.post('/company/send-sms', bearerAuthCompany, jsonParser, (request, response, next) => {
-  if(!request.body.textMessage || !request.body.volunteers || !Array.isArray(request.body.volunteers || !request.body.volunteers.length))
+  if(!request.body.textMessage || !request.body.volunteers || !Array.isArray(request.body.volunteers) || !request.body.volunteers.length)
     return next(new httpErrors(400, '__ERROR__ <textMessage> and <volunteers> (array) are required, and volunteers must not be empty.'));
 
   let volunteers = {};
@@ -102,7 +102,6 @@ companyAuthRouter.put('/company/approve', bearerAuthCompany, jsonParser, (reques
   if(!request.body.volunteerId)
     return next(new httpErrors(400, '<volunteerId> is required.'));
 
-  let data = {};
   if(!request.company.pendingVolunteers.map(volunteerId => volunteerId.toString()).includes(request.body.volunteerId))
     return next(new httpErrors(404, '__ERROR__ volunteer does not exist in pending volunteers'));
 
@@ -129,18 +128,11 @@ companyAuthRouter.put('/company/approve', bearerAuthCompany, jsonParser, (reques
     })
     .then(message => {
       logger.info(`${message.sid}: message sent to ${request.volunteerPhoneNumber}`);
-      data.sid = message.sid;
       return Company.findById(request.companyId)
         .populate('pendingVolunteers')
         .populate('activeVolunteers');
     })
-    .then(company => {
-      data = {
-        sid : data.sid,
-        ...company.getCensoredVolunteers(),
-      };
-      return response.json(data);
-    })
+    .then(company => response.json(company.getCensoredVolunteers()))
     .catch(next);
 });
 
@@ -154,7 +146,7 @@ companyAuthRouter.put('/company/terminate', bearerAuthCompany, jsonParser, (requ
     .includes(request.body.volunteerId.toString()))
     throw new httpErrors(404, '__ERROR__ volunteer not found.');
 
-  let data = {}, inPending = null;
+  let inPending = null;
 
   return Volunteer.findById(request.body.volunteerId)
     .then(volunteer => {
@@ -179,21 +171,12 @@ companyAuthRouter.put('/company/terminate', bearerAuthCompany, jsonParser, (requ
         body: inPending ? `Thank you for your interest in ${request.company.companyName}. At this time we have decided to pursue other candidates.` : `Thank you for supporting ${request.company.companyName}. You have been removed from our volunteer list.`,
       });
     })
-    .then(message => {
-      data.sid = message.sid;
-      data.textMessage = message.body;
+    .then(() => {
       return Company.findById(request.companyId)
         .populate('pendingVolunteers')
         .populate('activeVolunteers');
     })
-    .then(company => {
-      data = {
-        sid: data.sid,
-        textMessage: data.textMessage,
-        ...company.getCensoredVolunteers(),
-      };
-      return response.json(data);
-    })
+    .then(company => response.json(company.getCensoredVolunteers()))
     .catch(next);
 });
 

@@ -112,7 +112,7 @@ describe('company-auth-router.js', () => {
     });
 
     describe('POST /company/send-sms', () => {
-      test.only('should return a 200 once all volunteers are sent a message', () => {
+      test('should return a 200 once all volunteers are sent a message', () => {
         return volunteerMockFactory.createAndAddPending()
           .then(mock => {
             return superagent.post(`${process.env.API_URL}/company/send-sms`)
@@ -124,6 +124,81 @@ describe('company-auth-router.js', () => {
           })
           .then(response => {
             expect(response.status).toEqual(200);
+          });
+      });
+
+      test('should return a 400 if request data is missing', () => {
+        return volunteerMockFactory.createAndAddPending()
+          .then(mock => {
+            return superagent.post(`${process.env.API_URL}/company/send-sms`)
+              .set('Authorization', `Bearer ${mock.companyToken}`);
+          })
+          .then(Promise.reject)
+          .catch(response => {
+            expect(response.status).toEqual(400);
+          });
+      });
+
+      test('should return a 400 if request is missing the volunteers array', () => {
+        return volunteerMockFactory.createAndAddPending()
+          .then(mock => {
+            return superagent.post(`${process.env.API_URL}/company/send-sms`)
+              .set('Authorization', `Bearer ${mock.companyToken}`)
+              .send({
+                textMessage: faker.random.words(20),
+              });
+          })
+          .then(Promise.reject)
+          .catch(response => {
+            expect(response.status).toEqual(400);
+          });
+      });
+
+      test('should return a 400 if request array is not of type array', () => {
+        return volunteerMockFactory.createAndAddPending()
+          .then(mock => {
+            return superagent.post(`${process.env.API_URL}/company/send-sms`)
+              .set('Authorization', `Bearer ${mock.companyToken}`)
+              .send({
+                textMessage: faker.random.words(20),
+                volunteers: mock.volunteer._id,                
+              });
+          })
+          .then(Promise.reject)
+          .catch(response => {
+            expect(response.status).toEqual(400);
+          });
+      });
+
+      test('should return a 400 if request array is empty', () => {
+        return volunteerMockFactory.createAndAddPending()
+          .then(mock => {
+            return superagent.post(`${process.env.API_URL}/company/send-sms`)
+              .set('Authorization', `Bearer ${mock.companyToken}`)
+              .send({
+                textMessage: faker.random.words(20),
+                volunteers: [],                
+              });
+          })
+          .then(Promise.reject)
+          .catch(response => {
+            expect(response.status).toEqual(400);
+          });
+      });
+
+      test('should return a 404 if a volunteer in the array is not in either of the company\'s volunteer arrays', () => {
+        return volunteerMockFactory.createAndAddPending()
+          .then(mock => {
+            return superagent.post(`${process.env.API_URL}/company/send-sms`)
+              .set('Authorization', `Bearer ${mock.companyToken}`)
+              .send({
+                textMessage: faker.random.words(20),
+                volunteers: ['not a real volunteer'],
+              });
+          })
+          .then(Promise.reject)
+          .catch(response => {
+            expect(response.status).toEqual(404);
           });
       });
     });
@@ -310,7 +385,6 @@ describe('company-auth-router.js', () => {
               .send({volunteerId: mock.volunteer._id});
           })
           .then(response => {
-            expect(response.body.sid).toBeTruthy();
             expect(response.status).toEqual(200);
             expect(response.body.activeVolunteers[0]).toEqual({
               volunteerId: mock.volunteer._id.toString(),
@@ -374,9 +448,6 @@ describe('company-auth-router.js', () => {
             expect(response.status).toEqual(200);
             expect(response.body.pendingVolunteers.length).toEqual(0);
             expect(response.body.activeVolunteers.length).toEqual(0);
-            expect(response.body.sid).toBeTruthy();
-            // TODO: Take out this hacky sack
-            expect(response.body.textMessage.replace('Sent from your Twilio trial account - ', '')).toEqual(`Thank you for your interest in ${mock.company.companyName}. At this time we have decided to pursue other candidates.`);
             return Volunteer.findById(mock.volunteer._id);
           })
           .then(volunteer => {
@@ -404,9 +475,6 @@ describe('company-auth-router.js', () => {
             expect(response.status).toEqual(200);
             expect(response.body.pendingVolunteers.length).toEqual(0);
             expect(response.body.activeVolunteers.length).toEqual(0);
-            expect(response.body.sid).toBeTruthy();
-            // TODO: Take out this hacky sack
-            expect(response.body.textMessage.replace('Sent from your Twilio trial account - ', '')).toEqual(`Thank you for supporting ${mock.company.companyName}. You have been removed from our volunteer list.`);
             return Volunteer.findById(mock.volunteer._id);
           })
           .then(volunteer => {
