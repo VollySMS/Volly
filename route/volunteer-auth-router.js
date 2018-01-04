@@ -5,6 +5,7 @@ const jsonParser = require('express').json();
 const httpErrors = require('http-errors');
 const Volunteer = require('../model/volunteer');
 const Company = require('../model/company');
+const phoneNumber = require('../lib/phone-number');
 const basicAuthVolunteer = require('../lib/basic-auth-middleware')(Volunteer);
 const bearerAuthVolunteer = require('../lib/bearer-auth-middleware')(Volunteer);
 
@@ -19,7 +20,12 @@ volunteerAuthRouter.post('/volunteer/signup', jsonParser, (request, response, ne
   if(!filter.test(request.body.email))
     return next(new httpErrors(400, '__ERROR__ valid email required'));
 
-  return Volunteer.create(request.body.firstName, request.body.lastName, request.body.userName, request.body.password, request.body.email, request.body.phoneNumber)
+  let formattedPhoneNumber = phoneNumber.verifyPhoneNumber(request.body.phoneNumber);
+
+  if(!formattedPhoneNumber)
+    return next(new httpErrors(400, '__ERROR__ invalid phone number'));
+
+  return Volunteer.create(request.body.firstName, request.body.lastName, request.body.userName, request.body.password, request.body.email, formattedPhoneNumber)
     .then(volunteer => volunteer.createToken())
     .then(token => response.json({token}))
     .catch(next);
@@ -62,6 +68,15 @@ volunteerAuthRouter.get('/volunteer/active', bearerAuthVolunteer, (request, resp
 volunteerAuthRouter.put('/volunteer/update', bearerAuthVolunteer, jsonParser, (request, response, next) => {
   if(!(request.body.userName || request.body.password || request.body.email || request.body.phoneNumber || request.body.firstName || request.body.lastName))
     return next(new httpErrors(400, '__ERROR__ <userName>, <email>, <phoneNumber>, <firstName>, <lastName> or <password> are required to update volunteer info'));
+
+  if(request.body.phoneNumber) {
+    let formattedPhoneNumber = phoneNumber.verifyPhoneNumber(request.body.phoneNumber);
+  
+    if(!formattedPhoneNumber)
+      return next(new httpErrors(400, '__ERROR__ invalid phone number'));
+    
+    request.body.phoneNumber = formattedPhoneNumber;
+  }
 
   let data = {};
   for(let prop of Object.keys(request.body)){

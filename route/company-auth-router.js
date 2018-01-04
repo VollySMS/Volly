@@ -9,6 +9,7 @@ const Volunteer = require('../model/volunteer');
 const logger = require('../lib/logger');
 const basicAuthCompany = require('../lib/basic-auth-middleware')(Company);
 const bearerAuthCompany = require('../lib/bearer-auth-middleware')(Company);
+const phoneNumber = require('../lib/phone-number');
 
 const companyAuthRouter = module.exports = new Router();
 
@@ -21,7 +22,12 @@ companyAuthRouter.post('/company/signup', jsonParser, (request, response, next) 
   if(!filter.test(request.body.email))
     return next(new httpErrors(400, '__ERROR__ valid email required'));
 
-  return Company.create(request.body.companyName, request.body.password, request.body.email, request.body.phoneNumber, request.body.website)
+  let formattedPhoneNumber = phoneNumber.verifyPhoneNumber(request.body.phoneNumber);
+
+  if(!formattedPhoneNumber)
+    return next(new httpErrors(400, '__ERROR__ invalid phone number'));
+
+  return Company.create(request.body.companyName, request.body.password, request.body.email, formattedPhoneNumber, request.body.website)
     .then(company => company.createToken())
     .then(token => response.json({token}))
     .catch(next);
@@ -73,6 +79,15 @@ companyAuthRouter.get('/company/active', bearerAuthCompany, (request, response, 
 companyAuthRouter.put('/company/update', bearerAuthCompany, jsonParser, (request, response, next) => {
   if(!(request.body.companyName || request.body.password || request.body.email || request.body.phoneNumber || request.body.website))
     return next(new httpErrors(400, '__ERROR__ <companyName>, <email>, <phoneNumber>, <website> or <password> are required to update company info'));
+
+  if(request.body.phoneNumber) {
+    let formattedPhoneNumber = phoneNumber.verifyPhoneNumber(request.body.phoneNumber);
+  
+    if(!formattedPhoneNumber)
+      return next(new httpErrors(400, '__ERROR__ invalid phone number'));
+    
+    request.body.phoneNumber = formattedPhoneNumber;
+  }
 
   let data = {};
   for(let prop of Object.keys(request.body)){
