@@ -321,6 +321,18 @@ describe('company-auth-router.js', () => {
             expect(response.status).toEqual(404);
           });
       });
+      
+      test('should return 400 if no volunteerId is sent', () => {
+        return companyMockFactory.create()
+          .then(mock => {
+            return superagent.put(`${process.env.API_URL}/company/approve`)
+              .set('Authorization', `Bearer ${mock.token}`);
+          })
+          .then(Promise.reject)
+          .catch(response => {
+            expect(response.status).toEqual(400);
+          });
+      });
     });
 
     describe('PUT /company/terminate', () => {
@@ -343,6 +355,9 @@ describe('company-auth-router.js', () => {
             expect(response.status).toEqual(200);
             expect(response.body.pendingVolunteers.length).toEqual(0);
             expect(response.body.activeVolunteers.length).toEqual(0);
+            expect(response.body.sid).toBeTruthy();
+            // TODO: Take out this hacky sack
+            expect(response.body.textMessage.replace('Sent from your Twilio trial account - ', '')).toEqual(`Thank you for your interest in ${mock.company.companyName}. At this time we have decided to pursue other candidates.`);
             return Volunteer.findById(mock.volunteer._id);
           })
           .then(volunteer => {
@@ -370,6 +385,9 @@ describe('company-auth-router.js', () => {
             expect(response.status).toEqual(200);
             expect(response.body.pendingVolunteers.length).toEqual(0);
             expect(response.body.activeVolunteers.length).toEqual(0);
+            expect(response.body.sid).toBeTruthy();
+            // TODO: Take out this hacky sack
+            expect(response.body.textMessage.replace('Sent from your Twilio trial account - ', '')).toEqual(`Thank you for supporting ${mock.company.companyName}. You have been removed from our volunteer list.`);
             return Volunteer.findById(mock.volunteer._id);
           })
           .then(volunteer => {
