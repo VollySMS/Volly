@@ -27,7 +27,7 @@ companyAuthRouter.post('/company/signup', jsonParser, (request, response, next) 
   if(!formattedPhoneNumber)
     return next(new httpErrors(400, '__ERROR__ invalid phone number'));
 
-  return Company.create(request.body.companyName, request.body.password, request.body.email, request.body.phoneNumber, request.body.website)
+  return Company.create(request.body.companyName, request.body.password, request.body.email, formattedPhoneNumber, request.body.website)
     .then(company => company.createToken())
     .then(token => response.json({token}))
     .catch(next);

@@ -32,6 +32,22 @@ describe('volunteer-auth-router.js', () => {
           });
       });
 
+      test('creating an account should respond with a 400 status if an invalid phone number is sent', () => {
+        return superagent.post(`${process.env.API_URL}/volunteer/signup`)
+          .send({
+            firstName: faker.name.firstName(),
+            lastName: faker.name.lastName(),
+            userName: faker.company.companyName(),
+            password: faker.internet.password(),
+            email: faker.internet.email(),            
+            phoneNumber: '+17787471231077',
+          })
+          .then(Promise.reject)
+          .catch(response => {
+            expect(response.status).toEqual(400);
+          });
+      });
+
       test('creating an account should respond with a 400 status if an invalid email is sent', () => {
         return superagent.post(`${process.env.API_URL}/volunteer/signup`)
           .send({
