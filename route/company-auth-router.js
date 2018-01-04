@@ -80,6 +80,15 @@ companyAuthRouter.put('/company/update', bearerAuthCompany, jsonParser, (request
   if(!(request.body.companyName || request.body.password || request.body.email || request.body.phoneNumber || request.body.website))
     return next(new httpErrors(400, '__ERROR__ <companyName>, <email>, <phoneNumber>, <website> or <password> are required to update company info'));
 
+  if(request.body.phoneNumber) {
+    let formattedPhoneNumber = phoneNumber.verifyPhoneNumber(request.body.phoneNumber);
+  
+    if(!formattedPhoneNumber)
+      return next(new httpErrors(400, '__ERROR__ invalid phone number'));
+    
+    request.body.phoneNumber = formattedPhoneNumber;
+  }
+
   let data = {};
   for(let prop of Object.keys(request.body)){
     if(request.company[prop])

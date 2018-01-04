@@ -394,6 +394,7 @@ describe('company-auth-router.js', () => {
             expect(response.status).toEqual(200);
           });
       });
+
       test('if companyName or password is not updated, there should not be a new token', () => {
         return companyMockFactory.create()
           .then(mock => {
@@ -406,6 +407,20 @@ describe('company-auth-router.js', () => {
             expect(response.status).toEqual(200);
           });
       });
+
+      test('if an invalid phone number is sent to be updated a 400 should be returned', () => {
+        return companyMockFactory.create()
+          .then(mock => {
+            return superagent.put(`${process.env.API_URL}/company/update`)
+              .set('Authorization', `Bearer ${mock.token}`)
+              .send({phoneNumber: 'bad phone'});
+          })
+          .then(Promise.reject)
+          .catch(response => {
+            expect(response.status).toEqual(400);
+          });
+      });
+
       test('if no valid property is sent, 400 status code is returned', () => {
         return companyMockFactory.create()
           .then(mock => {
