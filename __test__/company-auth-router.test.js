@@ -156,11 +156,11 @@ describe('company-auth-router.js', () => {
       });
     });
 
-    describe('POST /company/send-sms', () => {
+    describe('POST /company/send', () => {
       test('should return a 200 once all volunteers are sent a message', () => {
         return volunteerMockFactory.createAndAddPending()
           .then(mock => {
-            return superagent.post(`${process.env.API_URL}/company/send-sms`)
+            return superagent.post(`${process.env.API_URL}/company/send`)
               .set('Authorization', `Bearer ${mock.companyToken}`)
               .send({
                 textMessage: faker.random.words(20),
@@ -175,7 +175,7 @@ describe('company-auth-router.js', () => {
       test('should return a 400 if request data is missing', () => {
         return volunteerMockFactory.createAndAddPending()
           .then(mock => {
-            return superagent.post(`${process.env.API_URL}/company/send-sms`)
+            return superagent.post(`${process.env.API_URL}/company/send`)
               .set('Authorization', `Bearer ${mock.companyToken}`);
           })
           .then(Promise.reject)
@@ -187,7 +187,7 @@ describe('company-auth-router.js', () => {
       test('should return a 400 if request is missing the volunteers array', () => {
         return volunteerMockFactory.createAndAddPending()
           .then(mock => {
-            return superagent.post(`${process.env.API_URL}/company/send-sms`)
+            return superagent.post(`${process.env.API_URL}/company/send`)
               .set('Authorization', `Bearer ${mock.companyToken}`)
               .send({
                 textMessage: faker.random.words(20),
@@ -202,7 +202,7 @@ describe('company-auth-router.js', () => {
       test('should return a 400 if request array is not of type array', () => {
         return volunteerMockFactory.createAndAddPending()
           .then(mock => {
-            return superagent.post(`${process.env.API_URL}/company/send-sms`)
+            return superagent.post(`${process.env.API_URL}/company/send`)
               .set('Authorization', `Bearer ${mock.companyToken}`)
               .send({
                 textMessage: faker.random.words(20),
@@ -218,7 +218,7 @@ describe('company-auth-router.js', () => {
       test('should return a 400 if request array is empty', () => {
         return volunteerMockFactory.createAndAddPending()
           .then(mock => {
-            return superagent.post(`${process.env.API_URL}/company/send-sms`)
+            return superagent.post(`${process.env.API_URL}/company/send`)
               .set('Authorization', `Bearer ${mock.companyToken}`)
               .send({
                 textMessage: faker.random.words(20),
@@ -234,7 +234,7 @@ describe('company-auth-router.js', () => {
       test('should return a 404 if a volunteer in the array is not in either of the company\'s volunteer arrays', () => {
         return volunteerMockFactory.createAndAddPending()
           .then(mock => {
-            return superagent.post(`${process.env.API_URL}/company/send-sms`)
+            return superagent.post(`${process.env.API_URL}/company/send`)
               .set('Authorization', `Bearer ${mock.companyToken}`)
               .send({
                 textMessage: faker.random.words(20),
