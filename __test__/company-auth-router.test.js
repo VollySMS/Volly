@@ -158,7 +158,7 @@ describe('company-auth-router.js', () => {
 
     describe('POST /company/send', () => {
       test('should return a 200 once all volunteers are sent a message', () => {
-        return volunteerMockFactory.createAndAddPending()
+        return volunteerMockFactory.createAndAddPending(true)
           .then(mock => {
             return superagent.post(`${process.env.API_URL}/company/send`)
               .set('Authorization', `Bearer ${mock.companyToken}`)
