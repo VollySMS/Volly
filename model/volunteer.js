@@ -5,6 +5,14 @@ const crypto = require('crypto');
 const httpErrors = require('http-errors');
 const jsonWebToken = require('jsonwebtoken');
 const mongoose = require('mongoose');
+const client = require('twilio')(process.env.TWILIO_SID, process.env.TWILIO_TOKEN);
+const ValidatorAPI = require('phone-number-validation');
+const UnverifiedAccount = require('./unverified-account');
+const logger = require('../lib/logger');
+const phoneNumberValidation = new ValidatorAPI({
+  access_key: process.env.NUMVERIFY_TOKEN,
+});
+
 
 const volunteerSchema = mongoose.Schema({
   firstName: {
@@ -35,6 +43,16 @@ const volunteerSchema = mongoose.Schema({
     unique: true,
   },
 
+  textable: {
+    type: Boolean,
+    required: true,
+  },
+
+  timestamp: {
+    type: Date,
+    default: () => new Date(),
+  },
+
   tokenSeed: {
     type: String,
     required: true,
@@ -60,12 +78,37 @@ const volunteerSchema = mongoose.Schema({
   usePushEach : true,
 });
 
+const promisify = (fn) => (...args) => {
+  return new Promise((resolve,reject) => {
+    fn(...args,(error,data) => {
+      if(error)
+        return reject(error);
+      return resolve(data);
+    });
+  });
+};
+
 volunteerSchema.methods.verifyPassword = function(password) {
   return bcrypt.compare(password, this.passwordHash)
     .then(response => {
       if(!response)
         throw new httpErrors(401, '__AUTH__ unauthorized');
       return this;
+    });
+};
+
+volunteerSchema.methods.initiateValidation = function() {
+  return promisify(phoneNumberValidation.validate)({number: this.phoneNumber.slice(1)})
+    .then(results => {      
+      if(results.line_type === 'mobile'){
+        return client.messages.create({
+          to: this.phoneNumber,
+          from: process.env.TWILIO_PHONE_NUMBER,
+          body: `Volly: Reply YES to receive text alerts.`,
+        })
+          .then(() => UnverifiedAccount.createVolunteer(this._id, this.phoneNumber));
+      }
+      return null;
     });
 };
 
@@ -107,7 +150,7 @@ volunteerSchema.methods.getCensoredCompanies = function() {
 
 const Volunteer = module.exports = mongoose.model('volunteer', volunteerSchema);
 
-Volunteer.create = (firstName, lastName, userName, password, email, phoneNumber) => {
+Volunteer.create = (firstName, lastName, userName, password, email, phoneNumber, textable = false) => {
   const HASH_SALT_ROUNDS = 8;
   return bcrypt.hash(password, HASH_SALT_ROUNDS)
     .then(passwordHash => {
@@ -119,6 +162,7 @@ Volunteer.create = (firstName, lastName, userName, password, email, phoneNumber)
         passwordHash,
         email,
         phoneNumber,
+        textable,
         tokenSeed,
       }).save();
     });
