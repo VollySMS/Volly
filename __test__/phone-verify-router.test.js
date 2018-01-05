@@ -12,12 +12,26 @@ describe('phone-verify-router.js', () => {
   afterEach(volunteerMockFactory.remove);
 
   describe('POST /verify', () => {    
-    test('should respond 200 when data is missing', () => {
-      return volunteerMockFactory.create(true)
+    test('should respond with a 200 and empty response text when volunteer is not in our database', () => {
+      return volunteerMockFactory.create(false)
         .then(() => {
-          return superagent.post(`${process.env.API_URL}/verify`);
+          return superagent.post(`${process.env.API_URL}/verify`)
+            .send('From=17787471077&Body=text');
         })
         .then(response => {
+          expect(response.text).toEqual('<Response></Response>');
+          expect(response.status).toEqual(200);
+        });
+    });
+
+    test('should respond with a 200 and confirmation message when successfully subscribed', () => {
+      return volunteerMockFactory.create()
+        .then(mock => {
+          return superagent.post(`${process.env.API_URL}/verify`)
+            .send(`From=${mock.volunteer.phoneNumber.slice(1)}&Body=text`);
+        })
+        .then(response => {
+          expect(response.text).toContain('Volly: Thank you for subscribing. Reply STOP to unsubscribe.');
           expect(response.status).toEqual(200);
         });
     });
