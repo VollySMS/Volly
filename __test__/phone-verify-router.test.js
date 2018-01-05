@@ -35,5 +35,53 @@ describe('phone-verify-router.js', () => {
           expect(response.status).toEqual(200);
         });
     });
+
+    test('should respond with a 200 and no message when successfully unsubscribed', () => {
+      return volunteerMockFactory.create()
+        .then(mock => {
+          return superagent.post(`${process.env.API_URL}/verify`)
+            .send(`From=${mock.volunteer.phoneNumber.slice(1)}&Body=stop`);
+        })
+        .then(response => {
+          expect(response.text).toEqual('<Response></Response>');
+          expect(response.status).toEqual(200);
+        });
+    });
+
+    test('should respond with a 200 and no message when we pass this contrived test', () => {
+      return volunteerMockFactory.create()
+        .then(mock => {
+          return superagent.post(`${process.env.API_URL}/verify`)
+            .send(`From=@${mock.volunteer.phoneNumber.slice(1)}&Body=stop`);
+        })
+        .then(response => {
+          expect(response.text).toEqual('<Response></Response>');
+          expect(response.status).toEqual(200);
+        });
+    });
+
+    test('should respond with a 200 and no message when successfully resubscribed', () => {
+      return volunteerMockFactory.create()
+        .then(mock => {
+          return superagent.post(`${process.env.API_URL}/verify`)
+            .send(`From=${mock.volunteer.phoneNumber.slice(1)}&Body=start`);
+        })
+        .then(response => {
+          expect(response.text).toEqual('<Response></Response>');
+          expect(response.status).toEqual(200);
+        });
+    });
+
+    test('should respond with a 200 and no message when successfully unuseful information is sent', () => {
+      return volunteerMockFactory.create()
+        .then(mock => {
+          return superagent.post(`${process.env.API_URL}/verify`)
+            .send(`From=${mock.volunteer.phoneNumber.slice(1)}&Body=last test horray!`);
+        })
+        .then(response => {
+          expect(response.text).toEqual('<Response></Response>');
+          expect(response.status).toEqual(200);
+        });
+    });
   });
 });

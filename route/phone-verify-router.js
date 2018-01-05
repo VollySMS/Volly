@@ -22,10 +22,8 @@ phoneVerifyRouter.post('/verify', bodyParser, (request, response, next) => {
     quit: true,
   };
 
-  if(phoneNumber[0] !== '+')
+  if(phoneNumber[0] !== '+' && phoneNumber[0] !== '@')
     phoneNumber = '+' + phoneNumber;
-
-  console.log(phoneNumber);
   
   return Volunteer.findOne({phoneNumber})
     .then(volunteer => {
