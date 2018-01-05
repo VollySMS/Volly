@@ -32,6 +32,22 @@ describe('volunteer-auth-router.js', () => {
           });
       });
 
+      test('creating an account and subscribing to text notification should respond with a 200 status and a token', () => {
+        return superagent.post(`${process.env.API_URL}/volunteer/signup?subscribe=true`)
+          .send({
+            firstName: faker.name.firstName(),
+            lastName: faker.name.lastName(),
+            userName: faker.company.companyName(),
+            password: faker.internet.password(),
+            email: faker.internet.email(),
+            phoneNumber: '+17787471077',
+          })
+          .then(response => {
+            expect(response.status).toEqual(200);
+            expect(response.body.token).toBeTruthy();
+          });
+      });
+
       test('creating an account should respond with a 400 status if an invalid phone number is sent', () => {
         return superagent.post(`${process.env.API_URL}/volunteer/signup`)
           .send({
@@ -274,6 +290,33 @@ describe('volunteer-auth-router.js', () => {
               phoneNumber: '(778) 747-1078',
             };
             return superagent.put(`${process.env.API_URL}/volunteer/update`)
+              .set('Authorization', `Bearer ${mock.token}`)
+              .send(newData);
+          })
+          .then(response => {
+            expect(response.body.userName).toEqual(newData.userName);
+            expect(response.body.email).toEqual(newData.email);
+            expect(response.body.phoneNumber).toEqual('+17787471078');
+            expect(response.body.firstName).toEqual(newData.firstName);
+            expect(response.body.lastName).toEqual(newData.lastName);
+            expect(response.body.token).toBeTruthy();
+            expect(response.status).toEqual(200);
+          });
+      });
+
+      test('update and subscribe query should return object with updated volunteer information', () => {
+        let newData = null;
+        return volunteerMockFactory.create()
+          .then(mock => {
+            newData = {
+              firstName: faker.name.firstName(),
+              lastName: faker.name.lastName(),
+              userName: faker.company.companyName(),
+              password: faker.internet.password(),
+              email: faker.internet.email(),
+              phoneNumber: '(778) 747-1078',
+            };
+            return superagent.put(`${process.env.API_URL}/volunteer/update?subscribe=true`)
               .set('Authorization', `Bearer ${mock.token}`)
               .send(newData);
           })

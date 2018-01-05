@@ -435,7 +435,34 @@ describe('company-auth-router.js', () => {
     });
 
     describe('PUT /company/approve', () => {
-      test('should return object with active and pending volunteers arrays', () => {
+      test('TEXTABLE - should return object with active and pending volunteers arrays', () => {
+        let mock = {};
+        return volunteerMockFactory.createAndAddPending(true)
+          .then(mockData => {
+            mock = mockData;
+            return superagent.put(`${process.env.API_URL}/company/approve`)
+              .set('Authorization', `Bearer ${mock.companyToken}`)
+              .send({volunteerId: mock.volunteer._id});
+          })
+          .then(response => {
+            expect(response.status).toEqual(200);
+            expect(response.body.activeVolunteers[0]).toEqual({
+              volunteerId: mock.volunteer._id.toString(),
+              firstName: mock.volunteer.firstName,
+              lastName: mock.volunteer.lastName,
+              phoneNumber: mock.volunteer.phoneNumber,
+              email: mock.volunteer.email,
+            });
+            expect(response.body.pendingVolunteers.length).toEqual(0);
+            return Volunteer.findById(mock.volunteer._id);
+          })
+          .then(volunteer => {
+            expect(volunteer.pendingCompanies.length).toEqual(0);
+            expect(volunteer.activeCompanies[0]).toEqual(mock.company._id);
+          });
+      });
+
+      test('NON_TEXTABLE - should return object with active and pending volunteers arrays', () => {
         let mock = {};
         return volunteerMockFactory.createAndAddPending()
           .then(mockData => {
@@ -489,7 +516,7 @@ describe('company-auth-router.js', () => {
     });
 
     describe('PUT /company/terminate', () => {
-      test('should return a 200 if pending volunteer is successfully removed', () => {
+      test('NON_TEXTABLE - should return a 200 if pending volunteer is successfully terminated', () => {
         let mock = {};
         return volunteerMockFactory.createAndAddPending()
           .then(mockData => {
@@ -516,9 +543,63 @@ describe('company-auth-router.js', () => {
           });
       });
 
-      test('should return a 200 if active volunteer is successfully terminated', () => {
+      test('TEXTABLE - should return a 200 if pending volunteer is successfully terminated', () => {
+        let mock = {};
+        return volunteerMockFactory.createAndAddPending(true)
+          .then(mockData => {
+            mock = mockData;
+            expect(mock.company.pendingVolunteers[0].toString()).toEqual(mock.volunteer._id.toString());
+            expect(mock.volunteer.pendingCompanies[0].toString()).toEqual(mock.company._id.toString());
+          })
+          .then(() => {
+            return superagent.put(`${process.env.API_URL}/company/terminate`)
+              .set('Authorization', `Bearer ${mock.companyToken}`)
+              .send({
+                volunteerId: mock.volunteer._id,
+              });
+          })
+          .then(response => {
+            expect(response.status).toEqual(200);
+            expect(response.body.pendingVolunteers.length).toEqual(0);
+            expect(response.body.activeVolunteers.length).toEqual(0);
+            return Volunteer.findById(mock.volunteer._id);
+          })
+          .then(volunteer => {
+            expect(volunteer.pendingCompanies.length).toEqual(0);
+            expect(volunteer.activeCompanies.length).toEqual(0);
+          });
+      });
+
+      test('NON_TEXTABLE - should return a 200 if active volunteer is successfully terminated', () => {
         let mock = {};
         return volunteerMockFactory.createAndAddActive()
+          .then(mockData => {
+            mock = mockData;
+            expect(mock.company.activeVolunteers[0]).toEqual(mock.volunteer._id);
+            expect(mock.volunteer.activeCompanies[0]).toEqual(mock.company._id);
+          })
+          .then(() => {
+            return superagent.put(`${process.env.API_URL}/company/terminate`)
+              .set('Authorization', `Bearer ${mock.companyToken}`)
+              .send({
+                volunteerId: mock.volunteer._id,
+              });
+          })
+          .then(response => {
+            expect(response.status).toEqual(200);
+            expect(response.body.pendingVolunteers.length).toEqual(0);
+            expect(response.body.activeVolunteers.length).toEqual(0);
+            return Volunteer.findById(mock.volunteer._id);
+          })
+          .then(volunteer => {
+            expect(volunteer.pendingCompanies.length).toEqual(0);
+            expect(volunteer.activeCompanies.length).toEqual(0);
+          });
+      });
+
+      test('TEXTABLE - should return a 200 if active volunteer is successfully terminated', () => {
+        let mock = {};
+        return volunteerMockFactory.createAndAddActive(true)
           .then(mockData => {
             mock = mockData;
             expect(mock.company.activeVolunteers[0]).toEqual(mock.volunteer._id);

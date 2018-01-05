@@ -21,11 +21,11 @@ phoneVerifyRouter.post('/verify', bodyParser, (request, response, next) => {
     end: true,
     quit: true,
   };
-
+  
   return Volunteer.findOne({phoneNumber})
     .then(volunteer => {
       if(!volunteer){
-        response.set('Content-Type', 'text/xml');
+        response.set('Content-Type', 'text/xml');        
         return response.send('<Response></Response>');
       }
 
@@ -46,6 +46,7 @@ phoneVerifyRouter.post('/verify', bodyParser, (request, response, next) => {
       if(twilioStart[message] || twilioStop[message]) {
         volunteer.textable = twilioStart[message] ? true : false;
         volunteer.firstSubscribe = false;
+        
         return volunteer.save()
           .then(() => {
             response.set('Content-Type', 'text/xml');
