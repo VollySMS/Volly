@@ -79,17 +79,18 @@ volunteerAuthRouter.get('/volunteer/active', bearerAuthVolunteer, (request, resp
 volunteerAuthRouter.put('/volunteer/update', bearerAuthVolunteer, jsonParser, (request, response, next) => {
   if(!(request.body.userName || request.body.password || request.body.email || request.body.phoneNumber || request.body.firstName || request.body.lastName))
     return next(new httpErrors(400, '__ERROR__ <userName>, <email>, <phoneNumber>, <firstName>, <lastName> or <password> are required to update volunteer info'));
-
+  
   if(request.body.phoneNumber) {
     let formattedPhoneNumber = phoneNumber.verifyPhoneNumber(request.body.phoneNumber);
   
-    if(!formattedPhoneNumber)
+    if(!formattedPhoneNumber || formattedPhoneNumber === request.volunteer.phoneNumber)
       return next(new httpErrors(400, '__ERROR__ invalid phone number'));
     
     request.body.phoneNumber = formattedPhoneNumber;
-    request.body.textable = false;
+    request.volunteer.textable = false;
+    request.volunteer.firstSubscribe = true;
   }
-
+  
   let data = {};
   for(let prop of Object.keys(request.body)){
     if(request.volunteer[prop])
@@ -111,9 +112,10 @@ volunteerAuthRouter.put('/volunteer/update', bearerAuthVolunteer, jsonParser, (r
     .then(token => {
       if(token)
         data.token = token;
+
       if(request.body.phoneNumber && request.query.subscribe === 'true')
         return request.volunteer.initiateValidation();
-      
+        
       return null;
     })
     .then(() => response.json(data))

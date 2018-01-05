@@ -271,7 +271,7 @@ describe('volunteer-auth-router.js', () => {
               userName: faker.company.companyName(),
               password: faker.internet.password(),
               email: faker.internet.email(),
-              phoneNumber: '(778) 747-1077',
+              phoneNumber: '(778) 747-1078',
             };
             return superagent.put(`${process.env.API_URL}/volunteer/update`)
               .set('Authorization', `Bearer ${mock.token}`)
@@ -280,7 +280,7 @@ describe('volunteer-auth-router.js', () => {
           .then(response => {
             expect(response.body.userName).toEqual(newData.userName);
             expect(response.body.email).toEqual(newData.email);
-            expect(response.body.phoneNumber).toEqual('+17787471077');
+            expect(response.body.phoneNumber).toEqual('+17787471078');
             expect(response.body.firstName).toEqual(newData.firstName);
             expect(response.body.lastName).toEqual(newData.lastName);
             expect(response.body.token).toBeTruthy();
