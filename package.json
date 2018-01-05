@@ -7,6 +7,7 @@
     "test": "jest -i --coverage",
     "test-c": "jest -i --coverage company-auth-router.test.js",
     "test-v": "jest -i --coverage volunteer-auth-router.test.js",
+    "test-p": "jest -i --coverage phone-verify-router.test.js",
     "test-s": "jest -i --coverage server.test.js",
     "lint": "eslint .",
     "start": "node index.js",
