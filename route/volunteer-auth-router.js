@@ -9,6 +9,7 @@ const phoneNumber = require('../lib/phone-number');
 const basicAuthVolunteer = require('../lib/basic-auth-middleware')(Volunteer);
 const bearerAuthVolunteer = require('../lib/bearer-auth-middleware')(Volunteer);
 
+
 const volunteerAuthRouter = module.exports = new Router();
 
 volunteerAuthRouter.post('/volunteer/signup', jsonParser, (request, response, next) => {
@@ -26,8 +27,18 @@ volunteerAuthRouter.post('/volunteer/signup', jsonParser, (request, response, ne
     return next(new httpErrors(400, '__ERROR__ invalid phone number'));
 
   return Volunteer.create(request.body.firstName, request.body.lastName, request.body.userName, request.body.password, request.body.email, formattedPhoneNumber)
-    .then(volunteer => volunteer.createToken())
-    .then(token => response.json({token}))
+    .then(volunteer => {
+      request.volunteer = volunteer;
+      return volunteer.createToken();
+    })
+    .then(token => {
+      request.token = token;
+      if(request.query.subscribe === 'true')
+        return request.volunteer.initiateValidation();
+
+      return null;
+    })
+    .then(() => response.json({token: request.token}))
     .catch(next);
 });
 
@@ -68,16 +79,18 @@ volunteerAuthRouter.get('/volunteer/active', bearerAuthVolunteer, (request, resp
 volunteerAuthRouter.put('/volunteer/update', bearerAuthVolunteer, jsonParser, (request, response, next) => {
   if(!(request.body.userName || request.body.password || request.body.email || request.body.phoneNumber || request.body.firstName || request.body.lastName))
     return next(new httpErrors(400, '__ERROR__ <userName>, <email>, <phoneNumber>, <firstName>, <lastName> or <password> are required to update volunteer info'));
-
+  
   if(request.body.phoneNumber) {
     let formattedPhoneNumber = phoneNumber.verifyPhoneNumber(request.body.phoneNumber);
   
-    if(!formattedPhoneNumber)
+    if(!formattedPhoneNumber || formattedPhoneNumber === request.volunteer.phoneNumber)
       return next(new httpErrors(400, '__ERROR__ invalid phone number'));
     
     request.body.phoneNumber = formattedPhoneNumber;
+    request.volunteer.textable = false;
+    request.volunteer.firstSubscribe = true;
   }
-
+  
   let data = {};
   for(let prop of Object.keys(request.body)){
     if(request.volunteer[prop])
@@ -92,14 +105,20 @@ volunteerAuthRouter.put('/volunteer/update', bearerAuthVolunteer, jsonParser, (r
       data.phoneNumber = volunteer.phoneNumber;
       data.firstName = volunteer.firstName;
       data.lastName = volunteer.lastName;
+      request.volunteer = volunteer;
 
       return request.body.userName || request.body.password ? volunteer.createToken() : null;
     })
     .then(token => {
       if(token)
         data.token = token;
-      return response.json(data);
+
+      if(request.body.phoneNumber && request.query.subscribe === 'true')
+        return request.volunteer.initiateValidation();
+        
+      return null;
     })
+    .then(() => response.json(data))
     .catch(next);
 });
 

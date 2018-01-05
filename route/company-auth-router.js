@@ -33,7 +33,7 @@ companyAuthRouter.post('/company/signup', jsonParser, (request, response, next) 
     .catch(next);
 });
 
-companyAuthRouter.post('/company/send-sms', bearerAuthCompany, jsonParser, (request, response, next) => {
+companyAuthRouter.post('/company/send', bearerAuthCompany, jsonParser, (request, response, next) => {
   if(!request.body.textMessage || !request.body.volunteers || !Array.isArray(request.body.volunteers) || !request.body.volunteers.length)
     return next(new httpErrors(400, '__ERROR__ <textMessage> and <volunteers> (array) are required, and volunteers must not be empty.'));
 
@@ -47,6 +47,7 @@ companyAuthRouter.post('/company/send-sms', bearerAuthCompany, jsonParser, (requ
   }
 
   return Promise.all(request.body.volunteers.map(volunteerId => Volunteer.findById(volunteerId)))
+    .then(volunteers => volunteers.filter(volunteer => volunteer.textable))
     .then(volunteers => Promise.all(volunteers.map(volunteer => client.messages.create({
       to: volunteer.phoneNumber,
       from: process.env.TWILIO_PHONE_NUMBER,
@@ -128,21 +129,25 @@ companyAuthRouter.put('/company/approve', bearerAuthCompany, jsonParser, (reques
       return volunteer.save();
     })
     .then(volunteer => {
-      request.volunteerPhoneNumber = volunteer.phoneNumber;
+      request.volunteer = volunteer;
       request.company.activeVolunteers.push(volunteer._id);
       request.company.pendingVolunteers = request.company.pendingVolunteers.filter(volunteerId => volunteerId.toString() !== volunteer._id.toString());
       return request.company.save();
     })
     .then(company => {
       request.companyId = company._id;
-      return client.messages.create({
-        to: request.volunteerPhoneNumber,
-        from: process.env.TWILIO_PHONE_NUMBER,
-        body: `Congratulations ${request.body.volunteerFirstName}, you've been accepted as a volunteer by ${company.companyName}!`,
-      });
+      if(request.volunteer.textable){
+        return client.messages.create({
+          to: request.volunteer.phoneNumber,
+          from: process.env.TWILIO_PHONE_NUMBER,
+          body: `Congratulations ${request.body.volunteerFirstName}, you've been accepted as a volunteer by ${company.companyName}!`,
+        });
+      }
+
+      return null;
     })
     .then(message => {
-      logger.info(`${message.sid}: message sent to ${request.volunteerPhoneNumber}`);
+      logger.info('approved:' + (message ? `${message.sid}: message sent to ${request.volunteer.phoneNumber}` : 'volunteer not textable'));
       return Company.findById(request.companyId)
         .populate('pendingVolunteers')
         .populate('activeVolunteers');
@@ -165,7 +170,7 @@ companyAuthRouter.put('/company/terminate', bearerAuthCompany, jsonParser, (requ
 
   return Volunteer.findById(request.body.volunteerId)
     .then(volunteer => {
-      request.volunteerPhoneNumber = volunteer.phoneNumber;
+      request.volunteer = volunteer;
       inPending = volunteer.pendingCompanies.length;
       volunteer.activeCompanies = volunteer.activeCompanies.filter(companyId => companyId.toString() !== request.company._id.toString());
       volunteer.pendingCompanies = volunteer.pendingCompanies.filter(companyId => companyId.toString() !== request.company._id.toString());
@@ -180,13 +185,18 @@ companyAuthRouter.put('/company/terminate', bearerAuthCompany, jsonParser, (requ
     })
     .then(company => {
       request.companyId = company._id;
-      return client.messages.create({
-        to: request.volunteerPhoneNumber,
-        from: process.env.TWILIO_PHONE_NUMBER,
-        body: inPending ? `Thank you for your interest in ${request.company.companyName}. At this time we have decided to pursue other candidates.` : `Thank you for supporting ${request.company.companyName}. You have been removed from our volunteer list.`,
-      });
+      if(request.volunteer.textable) {
+        return client.messages.create({
+          to: request.volunteer.phoneNumber,
+          from: process.env.TWILIO_PHONE_NUMBER,
+          body: inPending ? `Thank you for your interest in ${request.company.companyName}. At this time we have decided to pursue other candidates.` : `Thank you for supporting ${request.company.companyName}. You have been removed from our volunteer list.`,
+        });
+      }
+
+      return null;
     })
-    .then(() => {
+    .then(message => {
+      logger.info('terminated:' + (message ? `message sent to ${request.volunteer.phoneNumber}` : 'volunteer not textable'));
       return Company.findById(request.companyId)
         .populate('pendingVolunteers')
         .populate('activeVolunteers');
