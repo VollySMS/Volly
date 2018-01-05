@@ -6,7 +6,7 @@ const companyMockFactory = require('./company-mock-factory');
 
 const volunteerMockFactory = module.exports = {};
 
-volunteerMockFactory.create = () => {
+volunteerMockFactory.create = (textable = false) => {
   let mock = {};
   mock.request = {
     firstName: faker.name.firstName(),
@@ -14,9 +14,9 @@ volunteerMockFactory.create = () => {
     userName: faker.company.companyName(),
     password: faker.internet.password(),
     email: faker.internet.email(),
-    phoneNumber: '+17787471077',
+    phoneNumber: textable ? '+17787471077' : '+12538042550', 
   };
-  return Volunteer.create(mock.request.firstName, mock.request.lastName, mock.request.userName, mock.request.password, mock.request.email, mock.request.phoneNumber)
+  return Volunteer.create(mock.request.firstName, mock.request.lastName, mock.request.userName, mock.request.password, mock.request.email, mock.request.phoneNumber, textable)
     .then(volunteer => {
       mock.volunteer = volunteer;
       return volunteer.createToken();
@@ -32,13 +32,13 @@ volunteerMockFactory.create = () => {
     .catch(console.log);
 };
 
-volunteerMockFactory.createWithCompany = () => {
+volunteerMockFactory.createWithCompany = (textable = false) => {
   let mock = {};
   return companyMockFactory.create()
     .then(company => {
       mock.company = company.company;
       mock.companyToken = company.token;
-      return volunteerMockFactory.create();
+      return volunteerMockFactory.create(textable);
     })
     .then(volunteer => {
       mock.volunteer = volunteer.volunteer;
@@ -48,9 +48,9 @@ volunteerMockFactory.createWithCompany = () => {
     .catch(console.log);
 };
 
-volunteerMockFactory.createAndAddPending = () => {
+volunteerMockFactory.createAndAddPending = (textable = false) => {
   let mock = {};
-  return volunteerMockFactory.createWithCompany()
+  return volunteerMockFactory.createWithCompany(textable)
     .then(mockData => {
       mock = mockData;
 
@@ -65,9 +65,9 @@ volunteerMockFactory.createAndAddPending = () => {
     .catch(console.log);
 };
 
-volunteerMockFactory.createAndAddActive = () => {
+volunteerMockFactory.createAndAddActive = (textable = false) => {
   let mock = {};
-  return volunteerMockFactory.createAndAddPending()
+  return volunteerMockFactory.createAndAddPending(textable)
     .then(mockData => {
       mock = mockData;
 

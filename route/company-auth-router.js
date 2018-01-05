@@ -137,6 +137,7 @@ companyAuthRouter.put('/company/approve', bearerAuthCompany, jsonParser, (reques
     .then(company => {
       request.companyId = company._id;
       if(request.volunteer.textable){
+        
         return client.messages.create({
           to: request.volunteer.phoneNumber,
           from: process.env.TWILIO_PHONE_NUMBER,
@@ -146,7 +147,7 @@ companyAuthRouter.put('/company/approve', bearerAuthCompany, jsonParser, (reques
 
       return null;
     })
-    .then(message => {
+    .then(message => {      
       logger.info('approved:' + (message ? `${message.sid}: message sent to ${request.volunteer.phoneNumber}` : 'volunteer not textable'));
       return Company.findById(request.companyId)
         .populate('pendingVolunteers')
