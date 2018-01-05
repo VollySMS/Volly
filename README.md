@@ -52,7 +52,6 @@ Companies and volunteers sign up independently and connect via volunteer-initiat
 - get list of active volunteers
 - approve of pending volunteer
 - terminate volunteer
-- TODO: add remaining features
 - send text messages to active volunteers
 - delete
 
@@ -64,13 +63,18 @@ Companies and volunteers sign up independently and connect via volunteer-initiat
 - list all available companies
 - get list of pending companies
 - get list of active companies
-- apply to company
+- apply to companies
 - remove application from company
 - delete volunteer account
-- TODO: add remaining features
-- opt in to text alerts
+- opt in to receive text alerts
 
-## Tests
+### Schema
+
+<h1 align="center">
+  <img src="https://i.imgur.com/XkI7LST.png" alt="Volly" width="640"></a>
+</h1>
+
+### Tests
 
 All tests run through the Jest testing suite. To run our code on your machine, first clone the repo:
 
@@ -85,8 +89,6 @@ To run all test suites run `npm test`. To run only Company-specific tests, run `
 Once all tests have run, you can turn off the database with `npm run dboff`.
 
 ## How to use?
-
-TODO: For all of these routes, we need more detail on what to send, what to expect, and what to expect when requests are bad.
 
 Interact with *Volly* as a company or volunteer via HTTP requests to the various endpoints at `https://volly-sms.herokuapp.com/`.
 
@@ -201,7 +203,7 @@ echo '{"textMessage": '<textMessage>', "volunteers": ['<volunteerId>']}' | http 
 To remove a volunteer from either pending or active status you must send an object containing `volunteerId` and make sure to authenticate your request with your token.
 
 ```
-echo '{"volunteerId": '<volunteerId>'}' | http PUT https://volly-sms.herokuapp.com/company/terminate Authorization:'Bearer <Company-Token>'
+echo '{"volunteerId": '<volunteerId>'}' | http PUT https://volly-sms.herokuapp.com/company/terminate Authorization:'Bearer <companyToken>'
 
 Response:
 //  {
@@ -218,12 +220,12 @@ Delete removes your company from Volly and removes your company from all volunte
 http DELETE https://volly-sms.herokuapp.com/company/delete Authorization:'Bearer <Company-Token>'
 ```
 
-### `PUT /company/update`
+#### `PUT /company/update`
 
-This allows you to update any of the included properties in your company: <companyName>, <email>, <password>, <phoneNumber>, <website>. You must send an object containing the properties you wish to update and the updated value. When a phone number is included, our system will re-verify it. If your password is included we will create a new token. Sends a response with the updated body.
+This allows you to update any of the included properties in your company: <companyName>, <email>, <password>, <phoneNumber>, <website>. You must send an object containing the properties you wish to update and the updated value. When a phone number is changed, our system will re-verify it. If your password is changed we will create a new token. Sends a response with the updated body.
 
 ```
-echo '{"companyName": <companyName>, "email": <email>, "password": <password>, "phoneNumber": <phoneNumber>, "website": <website>}' | http PUT https://volly-sms.herokuapp.com/company/update Authorization:'Bearer <Company-Token>'
+echo '{"companyName": <companyName>, "email": <email>, "password": <password>, "phoneNumber": <phoneNumber>, "website": <website>}' | http PUT https://volly-sms.herokuapp.com/company/update Authorization:'Bearer <companyToken>'
 
 Response:
 //  {
@@ -238,7 +240,7 @@ Response:
 ```
 
 
-### Volunteer
+#### Volunteer
 
 #### `POST /volunteer/signup?subscribe=<true>`
 
@@ -254,11 +256,11 @@ The api will send you a text saying `Volly: Reply TEXT to receive text alerts`.
 Upon successfully signing up, you will receive a JSON Web Token used for authenticating future requests.
 
 ```
-echo '{"firstName": "Sally", "lastName": "Johnson", "userName": "sallyVolunteer98", "password": "goodThings123", "phoneNumber": "(216) 555-1111", "email": "goodPerson@gmail.com"}' | http POST https://volly-sms.herokuapp.com/volunteer/signup
+echo '{"firstName": "<firstName>", "lastName": "<lastName>", "userName": "<userName>", "password": "<password>", "phoneNumber": "<phoneNumber>", "email": "<email>"}' | http POST https://volly-sms.herokuapp.com/volunteer/signup
 // Response:
 //
 // {
-//    "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlblNlZWQiOiI4NmZlNjlkZTU5MjgzZjIyNTFkMDZhNjI3N2U0ZjZkYTc4OTc2NWYwYTI3YzMxYWNkMjU4Mjk1ZjEyYTdhZDQwMzE1NTdmODIwNDMyYTM4NGYyZTFjY2JkMjI2ZWJlNWJlZmFhY2QwY2QyZDQxZGY4ZDJiMmY4NWM2Y2Y1NGY5NiIsImlhdCI6MTUxNDg2Nzk3NX0.roxhaNFqSxaG_-QL6-nhwX6btx8fq24S9DV-rhwLdhA"
+//    "token": "<volunteerToken>"
 // }
 ```
 
@@ -267,25 +269,36 @@ echo '{"firstName": "Sally", "lastName": "Johnson", "userName": "sallyVolunteer9
 Your token is needed to authenticate all future requests. If your token is misplaced or expires, you can login to receive a new token. Send a GET request with your `userName` and `password` using Basic Auth to the `/volunteer/login` endpoint. Use the HTTPie flag `-a USERNAME:PASSWORD` to authenticate yourself.
 
 ```
-http GET https://volly-sms.herokuapp.com/volunteer/login -a sallyVolunteer98:goodThings123
+http GET https://volly-sms.herokuapp.com/volunteer/login -a <userName>:<password>
 
 // Response:
 //
 // {
-//    "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlblNlZWQiOiJkNzc2YjhkNmZiZTkwNTg3MDMwYjkzMjhjYmYwODlmZmU3ODJlOTQ5NTg5YTc3MWI5YzIyYzJhYWMxOWVkNzAzNzBkYWE2YmFkZTQ3MjA5ZWM5MmYxZTY3ZDNlMTZjYzc0MzE3MmJhYTE5ZDcyMjdjMGE0MDhiMGZjNTRmZGUyOSIsImlhdCI6MTUxNDg2ODEyOX0.fn9K2zzCLlLYORPzgQv7htyGAfrPqvHJaJaeNtXUeDs"
+//    "token": "<volunteerToken>"
 // }
 ```
 
 #### `GET /volunteer/opportunities`
-TODO: add this route!
 
 Once you have created an account and have your access token, you'll want to find some companies that have volunteer opportunities. Use your token to request the current list of companies. Data will be returned as an array of objects. You will need to use httpie-jwt-auth to authenticate yourself by adding `Authorization:'Bearer <yourToken>'` after the url in your request.
 
 ```
-http GET https://volly-sms.herokuapp.com/volunteer/opportunities Authorization:'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlblNlZWQiOiJkNzc2YjhkNmZiZTkwNTg3MDMwYjkzMjhjYmYwODlmZmU3ODJlOTQ5NTg5YTc3MWI5YzIyYzJhYWMxOWVkNzAzNzBkYWE2YmFkZTQ3MjA5ZWM5MmYxZTY3ZDNlMTZjYzc0MzE3MmJhYTE5ZDcyMjdjMGE0MDhiMGZjNTRmZGUyOSIsImlhdCI6MTUxNDg2ODEyOX0.fn9K2zzCLlLYORPzgQv7htyGAfrPqvHJaJaeNtXUeDs'
+http GET https://volly-sms.herokuapp.com/volunteer/opportunities Authorization:'Bearer <volunteerToken>'
 
 // Response:
-// TODO: fill this in once written
+//{
+// companies: {[
+//    {
+//     "companyId": "<companyId>",
+//     "companyName": "<companyName>",
+//     "email": "<email>",
+//     "password": "<password>",
+//     "phoneNumber": "<phoneNumber>",
+//     "website": "<website>",
+//    },
+// ]}
+//}
+//
 ```
 
 ### `GET /volunteer/pending`
@@ -330,7 +343,7 @@ Response:
 
 #### `PUT /volunteer/update?subscribe=<true>`
 
-This allows you to update any of the included properties: <userName>, <email>, <phoneNumber>, <firstName>, <lastName>,  <password>. You must send an object containing the properties you wish to update and the updated value. When a phone number is included, our system will re-verify it. If your password is included we will create a new token. Sends a response with the updated body.
+This allows you to update any of the included properties: <userName>, <email>, <phoneNumber>, <firstName>, <lastName>,  <password>. You must send an object containing the properties you wish to update and the updated value. When a phone number is changed, our system will re-verify it. If your password is changed we will create a new token. Sends a response with the updated body.
 
 To initiate text alert validation include `?subscribe=true` at the end of the signup url.
 The api will send you a text saying `Volly: Reply TEXT to receive text alerts`.
@@ -357,21 +370,21 @@ Response:
 Once you've found a company you want to volunteer for, apply to that company by sending an object with the `companyId` as a property. Don't forget to authenticate yourself using jwt-auth and your token.
 
 ```
-echo '{"companyId": "5a4b074914fe45001431b289"}' | http PUT https://volly-sms.herokuapp.com/volunteer/apply Authorization:'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlblNlZWQiOiJkNzc2YjhkNmZiZTkwNTg3MDMwYjkzMjhjYmYwODlmZmU3ODJlOTQ5NTg5YTc3MWI5YzIyYzJhYWMxOWVkNzAzNzBkYWE2YmFkZTQ3MjA5ZWM5MmYxZTY3ZDNlMTZjYzc0MzE3MmJhYTE5ZDcyMjdjMGE0MDhiMGZjNTRmZGUyOSIsImlhdCI6MTUxNDg2ODEyOX0.fn9K2zzCLlLYORPzgQv7htyGAfrPqvHJaJaeNtXUeDs'
+echo '{"companyId": "<companyId>"}' | http PUT https://volly-sms.herokuapp.com/volunteer/apply Authorization:'Bearer <volunteerToken>'
 
 // Response: 200
-{
-    "activeCompanies": [],
-    "pendingCompanies": [
-        {
-            "companyId": "5a4c4ef39c22fc0014afe65c",
-            "companyName": "bigBobsCharityHouse",
-            "email": "bigBob@bbch.org",
-            "phoneNumber": "(216) 555-1234",
-            "website": "www.companywebsite.org"
-        }
-    ]
-}
+//{
+//    "activeCompanies": [],
+//    "pendingCompanies": [
+//        {
+//            "companyId": "<companyId>",
+//            "companyName": "<companyName>",
+//            "email": "<email>",
+//            "phoneNumber": "<phoneNumber>",
+//            "website": "<website>"
+//        }
+//    ]
+//}
 ```
 
 #### `PUT /volunteer/leave`
@@ -379,12 +392,22 @@ echo '{"companyId": "5a4b074914fe45001431b289"}' | http PUT https://volly-sms.he
 If you no longer want to volunteer for a company (or be considered by that company if not yet approved) you can leave. Send an object with the `companyId` as a property and authenticate yourself using jwt-auth and your token. You will remove yourself from that company's database, and you will remove the record of that company from your database.
 
 ```
-echo '{"companyId": "5a4b074914fe45001431b289"}' | http PUT https://volly-sms.herokuapp.com/volunteer/leave Authorization:'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlblNlZWQiOiJkNzc2YjhkNmZiZTkwNTg3MDMwYjkzMjhjYmYwODlmZmU3ODJlOTQ5NTg5YTc3MWI5YzIyYzJhYWMxOWVkNzAzNzBkYWE2YmFkZTQ3MjA5ZWM5MmYxZTY3ZDNlMTZjYzc0MzE3MmJhYTE5ZDcyMjdjMGE0MDhiMGZjNTRmZGUyOSIsImlhdCI6MTUxNDg2ODEyOX0.fn9K2zzCLlLYORPzgQv7htyGAfrPqvHJaJaeNtXUeDs'
+echo '{"companyId": "<companyId>"}' | http PUT https://volly-sms.herokuapp.com/volunteer/leave Authorization:'Bearer <volunteerToken>'
 
 // Response: 200
+//{
+//    "activeCompanies": [remaining active companies],
+//    "pendingCompanies": [remaining pending companies]
+//}
 ```
 
-TODO: We need to change this so that the a subset of the volunteer's information is sent back, including pendingCompanies array and activeCompanies array.
+#### `DELETE /volunteer/delete`
+
+Delete removes your account from Volly and removes your account from all company pending and active lists. To delete your account from Volly you must authenticate your request with your token.
+
+```
+http DELETE https://volly-sms.herokuapp.com/volunteer/delete Authorization:'Bearer <volunteerToken>'
+```
 
 ## Contribute
 
