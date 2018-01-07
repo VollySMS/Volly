@@ -3,10 +3,12 @@
 const {Router} = require('express');
 const bodyParser = require('express').urlencoded({extended: false});
 const MessagingResponse = require('twilio').twiml.MessagingResponse;
-const Volunteer = require('../model/volunteer');
-const phoneVerifyRouter = module.exports = new Router();
 
-phoneVerifyRouter.post('/verify', bodyParser, (request, response, next) => {
+const Volunteer = require('../model/volunteer');
+
+const twilioRouter = module.exports = new Router();
+
+twilioRouter.post('/verify', bodyParser, (request, response, next) => {
   let phoneNumber = request.body.From, message = null;
   let twilioStart = {
     start: true,
