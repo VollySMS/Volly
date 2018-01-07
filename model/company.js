@@ -102,9 +102,17 @@ companySchema.methods._censorVolunteers = volunteers => {
 
 companySchema.methods.getCensoredVolunteers = function() {
   return {
-    pendingVolunteers: this._censorVolunteers(this.pendingVolunteers), 
-    activeVolunteers: this._censorVolunteers(this.activeVolunteers),
+    pendingVolunteers: this.getCensoredPendingVolunteers(), 
+    activeVolunteers: this.getCensoredActiveVolunteers(),
   };
+};
+
+companySchema.methods.getCensoredPendingVolunteers = function() {
+  return this._censorVolunteers(this.pendingVolunteers);
+};
+
+companySchema.methods.getCensoredActiveVolunteers = function() {
+  return this._censorVolunteers(this.activeVolunteers);
 };
 
 const Company = module.exports = mongoose.model('company', companySchema);

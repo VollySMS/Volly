@@ -4,23 +4,22 @@ const {Router} = require('express');
 const jsonParser = require('express').json();
 const httpErrors = require('http-errors');
 const client = require('twilio')(process.env.TWILIO_SID, process.env.TWILIO_TOKEN);
+
+const logger = require('../lib/logger');
 const Company = require('../model/company');
 const Volunteer = require('../model/volunteer');
-const logger = require('../lib/logger');
+const phoneNumber = require('../lib/phone-number');
 const basicAuthCompany = require('../lib/basic-auth-middleware')(Company);
 const bearerAuthCompany = require('../lib/bearer-auth-middleware')(Company);
-const phoneNumber = require('../lib/phone-number');
 
 const companyAuthRouter = module.exports = new Router();
 
 companyAuthRouter.post('/company/signup', jsonParser, (request, response, next) => {
-  let filter = /^.+@.+\..+$/;
-
   if(!request.body.companyName || !request.body.password || !request.body.email || !request.body.phoneNumber || !request.body.website)
     return next(new httpErrors(400, '__ERROR__ <companyName>, <email>, <phoneNumber>, <website> and <password> are required to sign up.'));
 
-  if(!filter.test(request.body.email))
-    return next(new httpErrors(400, '__ERROR__ valid email required'));
+  if(!(/^.+@.+\..+$/).test(request.body.email))
+    return next(new httpErrors(400, '__ERROR__ invalid email'));
 
   let formattedPhoneNumber = phoneNumber.verifyPhoneNumber(request.body.phoneNumber);
 
@@ -66,14 +65,14 @@ companyAuthRouter.get('/company/login', basicAuthCompany, (request, response, ne
 companyAuthRouter.get('/company/pending', bearerAuthCompany, (request, response, next) => {
   return Company.findById(request.company._id)
     .populate('pendingVolunteers')
-    .then(company => response.json({pendingVolunteers: company.getCensoredVolunteers().pendingVolunteers}))
+    .then(company => response.json({pendingVolunteers: company.getCensoredPendingVolunteers()}))
     .catch(next);
 });
 
 companyAuthRouter.get('/company/active', bearerAuthCompany, (request, response, next) => {
   return Company.findById(request.company._id)
     .populate('activeVolunteers')
-    .then(company => response.json({activeVolunteers: company.getCensoredVolunteers().activeVolunteers}))
+    .then(company => response.json({activeVolunteers: company.getCensoredActiveVolunteers()}))
     .catch(next);
 });
 
@@ -118,7 +117,10 @@ companyAuthRouter.put('/company/approve', bearerAuthCompany, jsonParser, (reques
   if(!request.body.volunteerId)
     return next(new httpErrors(400, '<volunteerId> is required.'));
 
-  if(!request.company.pendingVolunteers.map(volunteerId => volunteerId.toString()).includes(request.body.volunteerId))
+  let pendingVolunteers = {};
+  request.company.pendingVolunteers.forEach(pendingVolunteerId => pendingVolunteers[pendingVolunteerId.toString()] = true);
+
+  if(!pendingVolunteers[request.body.volunteerId])
     return next(new httpErrors(404, '__ERROR__ volunteer does not exist in pending volunteers'));
 
   return Volunteer.findById(request.body.volunteerId)
