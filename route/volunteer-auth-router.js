@@ -136,13 +136,12 @@ volunteerAuthRouter.put('/volunteer/apply', bearerAuthVolunteer, jsonParser, (re
       if(currentVolunteers[request.volunteer._id.toString()])
         throw new httpErrors(409, '__ERROR__ already applied to company');
 
-      company.pendingVolunteers.push(request.volunteerId);
+      company.pendingVolunteers.push(request.volunteer._id);
       return company.save();
     })
-    .then(() => Volunteer.findById(request.volunteer._id))
-    .then(volunteer => {
-      volunteer.pendingCompanies.push(request.body.companyId);
-      return volunteer.save();
+    .then(() => {
+      request.volunteer.pendingCompanies.push(request.body.companyId);
+      return request.volunteer.save();
     })
     .then(volunteer => {
       return Volunteer.findById(volunteer._id)
