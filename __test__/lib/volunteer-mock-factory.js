@@ -1,10 +1,14 @@
 'use strict';
 
 const faker = require('faker');
+
 const Volunteer = require('../../model/volunteer');
 const companyMockFactory = require('./company-mock-factory');
 
 const volunteerMockFactory = module.exports = {};
+
+const TEXTABLE_NUMBER = '+17787471077';
+const NOT_TEXTABLE_NUMBER = '+12538042550';
 
 volunteerMockFactory.create = (textable = false) => {
   let mock = {};
@@ -14,8 +18,9 @@ volunteerMockFactory.create = (textable = false) => {
     userName: faker.company.companyName(),
     password: faker.internet.password(),
     email: faker.internet.email(),
-    phoneNumber: textable ? '+17787471077' : '+12538042550', 
+    phoneNumber: textable ? TEXTABLE_NUMBER : NOT_TEXTABLE_NUMBER, 
   };
+
   return Volunteer.create(mock.request.firstName, mock.request.lastName, mock.request.userName, mock.request.password, mock.request.email, mock.request.phoneNumber, textable)
     .then(volunteer => {
       mock.volunteer = volunteer;
@@ -35,9 +40,9 @@ volunteerMockFactory.create = (textable = false) => {
 volunteerMockFactory.createWithCompany = (textable = false) => {
   let mock = {};
   return companyMockFactory.create()
-    .then(company => {
-      mock.company = company.company;
-      mock.companyToken = company.token;
+    .then(companyMock => {
+      mock.company = companyMock.company;
+      mock.companyToken = companyMock.token;
       return volunteerMockFactory.create(textable);
     })
     .then(volunteer => {
@@ -57,11 +62,15 @@ volunteerMockFactory.createAndAddPending = (textable = false) => {
       mock.company.pendingVolunteers.push(mock.volunteer._id);
       return mock.company.save();
     })
-    .then(() => {
-      mock.volunteer.pendingCompanies.push(mock.company._id);
+    .then(company => {
+      mock.company = company;
+      mock.volunteer.pendingCompanies.push(company._id);
       return mock.volunteer.save();
     })
-    .then(() => mock)
+    .then(volunteer => {
+      mock.volunteer = volunteer;
+      return mock;
+    })
     .catch(console.log);
 };
 
@@ -75,12 +84,16 @@ volunteerMockFactory.createAndAddActive = (textable = false) => {
       mock.company.activeVolunteers.push(mock.volunteer._id);
       return mock.company.save();
     })
-    .then(() => {
+    .then(company => {
+      mock.company = company;
       mock.volunteer.pendingCompanies = [];
-      mock.volunteer.activeCompanies.push(mock.company._id);
+      mock.volunteer.activeCompanies.push(company._id);
       return mock.volunteer.save();
     })
-    .then(() => mock)
+    .then(volunteer => {
+      mock.volunteer = volunteer;
+      return mock;
+    })
     .catch(console.log);
 };
 
