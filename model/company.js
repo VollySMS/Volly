@@ -6,36 +6,47 @@ const httpErrors = require('http-errors');
 const jsonWebToken = require('jsonwebtoken');
 const mongoose = require('mongoose');
 
-const companySchema = mongoose.Schema({ 
-  passwordHash: {
-    type: String,
-    required: true,
-  },
-  email: {
-    type: String,
-    required: true,
-    unique: true,
-  },
-  phoneNumber: {
-    type: String,
-    required: true,
-    unique: true,
-  },
-  companyName: {
-    type: String,
-    required: true,
-    unique: true,
-  },
-  website: {
-    type: String,
-    required: true,
-    unique: true,
-  },
+const companySchema = mongoose.Schema({
   tokenSeed: {
     type: String,
     required: true,
     unique: true,
   },
+
+  companyName: {
+    type: String,
+    required: true,
+    unique: true,
+  },
+
+  passwordHash: {
+    type: String,
+    required: true,
+  },
+
+  phoneNumber: {
+    type: String,
+    required: true,
+    unique: true,
+  },
+
+  email: {
+    type: String,
+    required: true,
+    unique: true,
+  },
+
+  website: {
+    type: String,
+    required: true,
+    unique: true,
+  },
+
+  timestamp: {
+    type: Date,
+    default: () => new Date(),
+  },
+
   pendingVolunteers: [{
     type : mongoose.Schema.Types.ObjectId,
     ref : 'volunteer',
@@ -79,13 +90,13 @@ companySchema.methods.createToken = function() {
     });
 };
 
-companySchema.methods._censorVolunteers = (array) => {
-  return array.map(pendingVolunteers => ({
-    volunteerId: pendingVolunteers._id,
-    firstName: pendingVolunteers.firstName,
-    lastName: pendingVolunteers.lastName,
-    phoneNumber: pendingVolunteers.phoneNumber,
-    email: pendingVolunteers.email,
+companySchema.methods._censorVolunteers = volunteers => {
+  return volunteers.map(pendingVolunteer => ({
+    volunteerId: pendingVolunteer._id,
+    firstName: pendingVolunteer.firstName,
+    lastName: pendingVolunteer.lastName,
+    phoneNumber: pendingVolunteer.phoneNumber,
+    email: pendingVolunteer.email,
   }));
 };
 

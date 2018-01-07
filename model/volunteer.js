@@ -112,7 +112,7 @@ volunteerSchema.methods.createToken = function() {
     });
 };
 
-volunteerSchema.methods._censorCompanies = (array) => {
+volunteerSchema.methods._censorCompanies = array => {
   return array.map(pendingCompany => ({
     companyId: pendingCompany._id,
     companyName: pendingCompany.companyName,
