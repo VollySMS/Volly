@@ -2,10 +2,11 @@
 
 const bcrypt = require('bcrypt');
 const crypto = require('crypto');
-const httpErrors = require('http-errors');
-const jsonWebToken = require('jsonwebtoken');
 const mongoose = require('mongoose');
 const client = require('twilio')(process.env.TWILIO_SID, process.env.TWILIO_TOKEN);
+
+const modelMethods = require('../lib/model-methods');
+
 
 const volunteerSchema = mongoose.Schema({
   firstName: {
@@ -76,14 +77,7 @@ const volunteerSchema = mongoose.Schema({
   usePushEach : true,
 });
 
-volunteerSchema.methods.verifyPassword = function(password) {
-  return bcrypt.compare(password, this.passwordHash)
-    .then(response => {
-      if(!response)
-        throw new httpErrors(401, '__AUTH__ unauthorized');
-      return this;
-    });
-};
+volunteerSchema.methods.verifyPassword = modelMethods.verifyPassword;
 
 volunteerSchema.methods.initiateValidation = function() {
   return client.messages.create({
@@ -93,24 +87,9 @@ volunteerSchema.methods.initiateValidation = function() {
   });
 };
 
-volunteerSchema.methods.changePassword = function(password) {
-  const HASH_SALT_ROUNDS = 8;
-  return bcrypt.hash(password, HASH_SALT_ROUNDS)
-    .then(passwordHash => {
-      this.passwordHash = passwordHash;
-      return this.save();
-    });
-};
+volunteerSchema.methods.changePassword = modelMethods.changePassword;
 
-volunteerSchema.methods.createToken = function() {
-  this.tokenSeed = crypto.randomBytes(64).toString('hex');
-  return this.save()
-    .then(volunteer => {
-      return jsonWebToken.sign({
-        tokenSeed: volunteer.tokenSeed,
-      }, process.env.SALT_SECRET);
-    });
-};
+volunteerSchema.methods.createToken = modelMethods.createToken;
 
 volunteerSchema.methods._censorCompanies = array => {
   return array.map(pendingCompany => ({
