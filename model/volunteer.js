@@ -129,6 +129,14 @@ volunteerSchema.methods.getCensoredCompanies = function() {
   };
 };
 
+volunteerSchema.methods.getCensoredPendingCompanies = function() {
+  return this._censorCompanies(this.pendingCompanies);
+};
+
+volunteerSchema.methods.getCensoredActiveCompanies = function() {
+  return this._censorCompanies(this.activeCompanies);
+};
+
 const Volunteer = module.exports = mongoose.model('volunteer', volunteerSchema);
 
 Volunteer.create = (firstName, lastName, userName, password, email, phoneNumber, textable = false, firstSubscribe = true) => {

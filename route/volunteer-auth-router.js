@@ -3,23 +3,21 @@
 const {Router} = require('express');
 const jsonParser = require('express').json();
 const httpErrors = require('http-errors');
+
 const Volunteer = require('../model/volunteer');
 const Company = require('../model/company');
 const phoneNumber = require('../lib/phone-number');
 const basicAuthVolunteer = require('../lib/basic-auth-middleware')(Volunteer);
 const bearerAuthVolunteer = require('../lib/bearer-auth-middleware')(Volunteer);
 
-
 const volunteerAuthRouter = module.exports = new Router();
 
 volunteerAuthRouter.post('/volunteer/signup', jsonParser, (request, response, next) => {
-  let filter = /^.+@.+\..+$/;
-
   if(!request.body.firstName || !request.body.lastName || !request.body.userName || !request.body.password || !request.body.email || !request.body.phoneNumber)
     return next(new httpErrors(400, '__ERROR__ <firstName>, <lastName>, <userName>, <email>, <phoneNumber>, and <password> are required to sign up.'));
 
-  if(!filter.test(request.body.email))
-    return next(new httpErrors(400, '__ERROR__ valid email required'));
+  if(!(/^.+@.+\..+$/).test(request.body.email))
+    return next(new httpErrors(400, '__ERROR__ invalid email'));
 
   let formattedPhoneNumber = phoneNumber.verifyPhoneNumber(request.body.phoneNumber);
 
@@ -65,14 +63,14 @@ volunteerAuthRouter.get('/volunteer/opportunities', bearerAuthVolunteer, (reques
 volunteerAuthRouter.get('/volunteer/pending', bearerAuthVolunteer, (request, response, next) => {
   return Volunteer.findById(request.volunteer._id)
     .populate('pendingCompanies')
-    .then(volunteer => response.json({pendingCompanies: volunteer.getCensoredCompanies().pendingCompanies}))
+    .then(volunteer => response.json({pendingCompanies: volunteer.getCensoredPendingCompanies()}))
     .catch(next);
 });
 
 volunteerAuthRouter.get('/volunteer/active', bearerAuthVolunteer, (request, response, next) => {
   return Volunteer.findById(request.volunteer._id)
     .populate('activeCompanies')
-    .then(volunteer => response.json({activeCompanies: volunteer.getCensoredCompanies().activeCompanies}))
+    .then(volunteer => response.json({activeCompanies: volunteer.getCensoredActiveCompanies()}))
     .catch(next);
 });
 
