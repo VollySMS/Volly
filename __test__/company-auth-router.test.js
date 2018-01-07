@@ -4,11 +4,14 @@ require('./lib/setup');
 
 const faker = require('faker');
 const superagent = require('superagent');
+
 const server = require('../lib/server');
-const Volunteer = require('../model/volunteer');
 const Company = require('../model/company');
+const Volunteer = require('../model/volunteer');
 const companyMockFactory = require('./lib/company-mock-factory');
 const volunteerMockFactory = require('./lib/volunteer-mock-factory');
+
+const TEXTABLE_NUMBER = '+17787471077';
 
 describe('company-auth-router.js', () => {
   beforeAll(server.start);
@@ -23,7 +26,7 @@ describe('company-auth-router.js', () => {
             companyName: faker.company.companyName(),
             password: faker.internet.password(),
             email: faker.internet.email(),
-            phoneNumber: '+17787471077',
+            phoneNumber: TEXTABLE_NUMBER,
             website: faker.internet.url(),
           })
           .then(response => {
@@ -83,7 +86,7 @@ describe('company-auth-router.js', () => {
             companyName: faker.company.companyName(),
             password: faker.internet.password(),
             email: 'invalid email',
-            phoneNumber: '+17787471077',
+            phoneNumber: TEXTABLE_NUMBER,
             website: faker.internet.url(),
           })
           .then(Promise.reject)
@@ -97,7 +100,7 @@ describe('company-auth-router.js', () => {
           .send({
             password: faker.internet.password(),
             email: faker.internet.email(),
-            phoneNumber: '+17787471077',
+            phoneNumber: TEXTABLE_NUMBER,
           })
           .then(Promise.reject)
           .catch(response => {
@@ -105,13 +108,13 @@ describe('company-auth-router.js', () => {
           });
       });
   
-      test('creating an account should respond with a 400 if an incorrect type is sent', () => {
+      test('creating an account should respond with a 400 if an incorrect property type is sent', () => {
         return superagent.post(`${process.env.API_URL}/company/signup`)
           .send({
             companyName: {},
             password: faker.internet.password(),
             email: faker.internet.email(), 
-            phoneNumber: '+17787471077',
+            phoneNumber: TEXTABLE_NUMBER,
             website: faker.internet.url(),
           })
           .then(Promise.reject)
@@ -130,7 +133,7 @@ describe('company-auth-router.js', () => {
                 companyName: company.companyName,
                 password: faker.internet.password(),
                 email: faker.internet.email(),
-                phoneNumber: '+17787471077',
+                phoneNumber: TEXTABLE_NUMBER,
                 website: faker.internet.url(),
               });
           })
@@ -146,7 +149,7 @@ describe('company-auth-router.js', () => {
             companyName: faker.company.companyName(),
             password: faker.internet.password(),
             email: faker.internet.email(),
-            phoneNumber: '+17787471077',
+            phoneNumber: TEXTABLE_NUMBER,
             website: faker.internet.url(),
           })
           .then(Promise.reject)
@@ -324,7 +327,7 @@ describe('company-auth-router.js', () => {
     });
 
     describe('GET /company/pending', () => {
-      test('should return a 200 if pending volunteers are successfully found', () => {
+      test('should return a 200 and an array if pending volunteers are successfully found', () => {
         let mock = {};
         return volunteerMockFactory.createAndAddPending()
           .then(mockData => {
@@ -346,7 +349,7 @@ describe('company-auth-router.js', () => {
     });
 
     describe('GET /company/active', () => {
-      test('should return a 200 if active volunteers are successfully found', () => {
+      test('should return a 200 and an array if active volunteers are successfully found', () => {
         let mock = {};
         return volunteerMockFactory.createAndAddActive()
           .then(mockData => {
@@ -370,7 +373,7 @@ describe('company-auth-router.js', () => {
 
   describe('PUT', () => {
     describe('PUT /company/update', () => {
-      test('should return object with updated information', () => {
+      test('should return object with updated information and new token', () => {
         let newData = null;
         return companyMockFactory.create()
           .then(mock => {
@@ -388,7 +391,7 @@ describe('company-auth-router.js', () => {
           .then(response => {
             expect(response.body.companyName).toEqual(newData.companyName);
             expect(response.body.email).toEqual(newData.email);
-            expect(response.body.phoneNumber).toEqual('+17787471077');
+            expect(response.body.phoneNumber).toEqual(TEXTABLE_NUMBER);
             expect(response.body.website).toEqual(newData.website);
             expect(response.body.token).toBeTruthy();
             expect(response.status).toEqual(200);
@@ -408,7 +411,7 @@ describe('company-auth-router.js', () => {
           });
       });
 
-      test('if an invalid phone number is sent to be updated a 400 should be returned', () => {
+      test('if an invalid phone number is sent a 400 should be returned', () => {
         return companyMockFactory.create()
           .then(mock => {
             return superagent.put(`${process.env.API_URL}/company/update`)
@@ -709,7 +712,7 @@ describe('company-auth-router.js', () => {
           companyName: faker.company.companyName(),          
           password: faker.internet.password(),
           email: faker.internet.email(), 
-          phoneNumber: '+17787471077',
+          phoneNumber: TEXTABLE_NUMBER,
           website: faker.internet.url(),
         })
         .then(Promise.reject)

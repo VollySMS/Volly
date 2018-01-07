@@ -3,6 +3,7 @@
 require('./lib/setup');
 
 const superagent = require('superagent');
+
 const server = require('../lib/server');
 const volunteerMockFactory = require('./lib/volunteer-mock-factory');
 
