@@ -126,17 +126,20 @@ volunteerAuthRouter.put('/volunteer/apply', bearerAuthVolunteer, jsonParser, (re
 
   return Company.findById(request.body.companyId)
     .then(company => {
-      if(company.activeVolunteers
-        .map(volunteerId => volunteerId.toString())
-        .includes(request.volunteerId.toString()) || company.pendingVolunteers
-          .map(volunteerId => volunteerId.toString())
-          .includes(request.volunteerId.toString()))
-        throw new httpErrors(409, '__ERROR__ duplicate volunteer.');
+      if(!company)
+        throw new httpErrors(404, '__ERROR__ company not found.');
+
+      let currentVolunteers = {};
+      company.activeVolunteers.forEach(volunteerId => currentVolunteers[volunteerId.toString()] = true);
+      company.pendingVolunteers.forEach(volunteerId => currentVolunteers[volunteerId.toString()] = true);
+
+      if(currentVolunteers[request.volunteer._id.toString()])
+        throw new httpErrors(409, '__ERROR__ already applied to company');
 
       company.pendingVolunteers.push(request.volunteerId);
       return company.save();
     })
-    .then(() => Volunteer.findById(request.volunteerId))
+    .then(() => Volunteer.findById(request.volunteer._id))
     .then(volunteer => {
       volunteer.pendingCompanies.push(request.body.companyId);
       return volunteer.save();

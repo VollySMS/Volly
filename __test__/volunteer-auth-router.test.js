@@ -400,18 +400,15 @@ describe('volunteer-auth-router.js', () => {
           });
       });
 
-      test('should return status code 400 if invalid company id is provided', () => {
+      test('should return status code 400 if company id is missing', () => {
         return volunteerMockFactory.createWithCompany()
           .then(mock => {
             return superagent.put(`${process.env.API_URL}/volunteer/apply`)
-              .set('Authorization', `Bearer ${mock.volunteerToken}`)
-              .send({
-                invalidId: mock.company._id,
-              })
-              .then(Promise.reject)
-              .catch(response => {
-                expect(response.status).toEqual(400);
-              });
+              .set('Authorization', `Bearer ${mock.volunteerToken}`);
+          })
+          .then(Promise.reject)
+          .catch(response => {
+            expect(response.status).toEqual(400);
           });
       });
 
@@ -451,7 +448,22 @@ describe('volunteer-auth-router.js', () => {
             return superagent.put(`${process.env.API_URL}/volunteer/apply`)
               .set('Authorization', `Bearer ${mock.volunteerToken}`)
               .send({
-                companyId: 'fake-company-id',
+                companyId: '5a51902b21b18802adaa48d6',
+              });
+          })
+          .then(Promise.reject)
+          .catch(response => {
+            expect(response.status).toEqual(404);
+          });
+      });
+
+      test('should respond with a 404 status if you apply to a company with an improperly formatted companyId', () => {
+        return volunteerMockFactory.createWithCompany()
+          .then(mock => {
+            return superagent.put(`${process.env.API_URL}/volunteer/apply`)
+              .set('Authorization', `Bearer ${mock.volunteerToken}`)
+              .send({
+                companyId: 'bogus id',
               });
           })
           .then(Promise.reject)
