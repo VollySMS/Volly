@@ -3,23 +3,21 @@
 const {Router} = require('express');
 const jsonParser = require('express').json();
 const httpErrors = require('http-errors');
+
 const Volunteer = require('../model/volunteer');
 const Company = require('../model/company');
 const phoneNumber = require('../lib/phone-number');
 const basicAuthVolunteer = require('../lib/basic-auth-middleware')(Volunteer);
 const bearerAuthVolunteer = require('../lib/bearer-auth-middleware')(Volunteer);
 
-
 const volunteerAuthRouter = module.exports = new Router();
 
 volunteerAuthRouter.post('/volunteer/signup', jsonParser, (request, response, next) => {
-  let filter = /^.+@.+\..+$/;
-
   if(!request.body.firstName || !request.body.lastName || !request.body.userName || !request.body.password || !request.body.email || !request.body.phoneNumber)
     return next(new httpErrors(400, '__ERROR__ <firstName>, <lastName>, <userName>, <email>, <phoneNumber>, and <password> are required to sign up.'));
 
-  if(!filter.test(request.body.email))
-    return next(new httpErrors(400, '__ERROR__ valid email required'));
+  if(!(/^.+@.+\..+$/).test(request.body.email))
+    return next(new httpErrors(400, '__ERROR__ invalid email'));
 
   let formattedPhoneNumber = phoneNumber.verifyPhoneNumber(request.body.phoneNumber);
 
@@ -65,14 +63,14 @@ volunteerAuthRouter.get('/volunteer/opportunities', bearerAuthVolunteer, (reques
 volunteerAuthRouter.get('/volunteer/pending', bearerAuthVolunteer, (request, response, next) => {
   return Volunteer.findById(request.volunteer._id)
     .populate('pendingCompanies')
-    .then(volunteer => response.json({pendingCompanies: volunteer.getCensoredCompanies().pendingCompanies}))
+    .then(volunteer => response.json({pendingCompanies: volunteer.getCensoredPendingCompanies()}))
     .catch(next);
 });
 
 volunteerAuthRouter.get('/volunteer/active', bearerAuthVolunteer, (request, response, next) => {
   return Volunteer.findById(request.volunteer._id)
     .populate('activeCompanies')
-    .then(volunteer => response.json({activeCompanies: volunteer.getCensoredCompanies().activeCompanies}))
+    .then(volunteer => response.json({activeCompanies: volunteer.getCensoredActiveCompanies()}))
     .catch(next);
 });
 
@@ -128,20 +126,22 @@ volunteerAuthRouter.put('/volunteer/apply', bearerAuthVolunteer, jsonParser, (re
 
   return Company.findById(request.body.companyId)
     .then(company => {
-      if(company.activeVolunteers
-        .map(volunteerId => volunteerId.toString())
-        .includes(request.volunteerId.toString()) || company.pendingVolunteers
-          .map(volunteerId => volunteerId.toString())
-          .includes(request.volunteerId.toString()))
-        throw new httpErrors(409, '__ERROR__ duplicate volunteer.');
+      if(!company)
+        throw new httpErrors(404, '__ERROR__ company not found.');
 
-      company.pendingVolunteers.push(request.volunteerId);
+      let currentVolunteers = {};
+      company.activeVolunteers.forEach(volunteerId => currentVolunteers[volunteerId.toString()] = true);
+      company.pendingVolunteers.forEach(volunteerId => currentVolunteers[volunteerId.toString()] = true);
+
+      if(currentVolunteers[request.volunteer._id.toString()])
+        throw new httpErrors(409, '__ERROR__ already applied to company');
+
+      company.pendingVolunteers.push(request.volunteer._id);
       return company.save();
     })
-    .then(() => Volunteer.findById(request.volunteerId))
-    .then(volunteer => {
-      volunteer.pendingCompanies.push(request.body.companyId);
-      return volunteer.save();
+    .then(() => {
+      request.volunteer.pendingCompanies.push(request.body.companyId);
+      return request.volunteer.save();
     })
     .then(volunteer => {
       return Volunteer.findById(volunteer._id)
@@ -156,19 +156,22 @@ volunteerAuthRouter.put('/volunteer/leave', bearerAuthVolunteer, jsonParser, (re
   if(!request.body.companyId)
     return next(new httpErrors(400, '__ERROR__ company id is required'));
 
+  let activeCompanies = {};
+  request.volunteer.activeCompanies.forEach(companyId => activeCompanies[companyId.toString()] = true);
+
+  let volunteerType = activeCompanies[request.body.companyId.toString()] ? 'active' : 'pending';
+
   return Company.findById(request.body.companyId)
     .then(company => {
       if(!company)
         throw new httpErrors(404, '__ERROR__ company not found.');
 
-      company.activeVolunteers = company.activeVolunteers.filter(volunteerId => volunteerId.toString() !== request.volunteer._id.toString());
-      company.pendingVolunteers = company.pendingVolunteers.filter(volunteerId => volunteerId.toString() !== request.volunteer._id.toString());
+      company[`${volunteerType}Volunteers`] = company[`${volunteerType}Volunteers`].filter(volunteerId => volunteerId.toString() !== request.volunteer._id.toString());
 
       return company.save();
     })
     .then(() => {
-      request.volunteer.activeCompanies = request.volunteer.activeCompanies.filter(companyId => companyId.toString() !== request.body.companyId.toString());
-      request.volunteer.pendingCompanies = request.volunteer.pendingCompanies.filter(companyId => companyId.toString() !== request.body.companyId.toString());
+      request.volunteer[`${volunteerType}Companies`] = request.volunteer[`${volunteerType}Companies`].filter(companyId => companyId.toString() !== request.body.companyId.toString());
       return request.volunteer.save();
     })
     .then(volunteer => {

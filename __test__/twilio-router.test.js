@@ -3,6 +3,7 @@
 require('./lib/setup');
 
 const superagent = require('superagent');
+
 const server = require('../lib/server');
 const volunteerMockFactory = require('./lib/volunteer-mock-factory');
 
@@ -16,7 +17,7 @@ describe('phone-verify-router.js', () => {
       return volunteerMockFactory.create(false)
         .then(() => {
           return superagent.post(`${process.env.API_URL}/verify`)
-            .send('From=17787471077&Body=text');
+            .send('From=+17787471077&Body=text');
         })
         .then(response => {
           expect(response.text).toEqual('<Response></Response>');
@@ -28,7 +29,7 @@ describe('phone-verify-router.js', () => {
       return volunteerMockFactory.create()
         .then(mock => {
           return superagent.post(`${process.env.API_URL}/verify`)
-            .send(`From=${mock.volunteer.phoneNumber.slice(1)}&Body=text`);
+            .send(`From=${mock.volunteer.phoneNumber}&Body=text`);
         })
         .then(response => {
           expect(response.text).toContain('Volly: Thank you for subscribing. Reply STOP to unsubscribe.');
@@ -40,19 +41,7 @@ describe('phone-verify-router.js', () => {
       return volunteerMockFactory.create()
         .then(mock => {
           return superagent.post(`${process.env.API_URL}/verify`)
-            .send(`From=${mock.volunteer.phoneNumber.slice(1)}&Body=stop`);
-        })
-        .then(response => {
-          expect(response.text).toEqual('<Response></Response>');
-          expect(response.status).toEqual(200);
-        });
-    });
-
-    test('should respond with a 200 and no message when we pass this contrived test', () => {
-      return volunteerMockFactory.create()
-        .then(mock => {
-          return superagent.post(`${process.env.API_URL}/verify`)
-            .send(`From=@${mock.volunteer.phoneNumber.slice(1)}&Body=stop`);
+            .send(`From=${mock.volunteer.phoneNumber}&Body=stop`);
         })
         .then(response => {
           expect(response.text).toEqual('<Response></Response>');
@@ -64,7 +53,7 @@ describe('phone-verify-router.js', () => {
       return volunteerMockFactory.create()
         .then(mock => {
           return superagent.post(`${process.env.API_URL}/verify`)
-            .send(`From=${mock.volunteer.phoneNumber.slice(1)}&Body=start`);
+            .send(`From=${mock.volunteer.phoneNumber}&Body=start`);
         })
         .then(response => {
           expect(response.text).toEqual('<Response></Response>');
@@ -72,11 +61,11 @@ describe('phone-verify-router.js', () => {
         });
     });
 
-    test('should respond with a 200 and no message when successfully unuseful information is sent', () => {
+    test('should respond with a 200 and no message when volunteer is in database but a non-command is sent', () => {
       return volunteerMockFactory.create()
         .then(mock => {
           return superagent.post(`${process.env.API_URL}/verify`)
-            .send(`From=${mock.volunteer.phoneNumber.slice(1)}&Body=last test horray!`);
+            .send(`From=${mock.volunteer.phoneNumber}&Body=fakeMessage`);
         })
         .then(response => {
           expect(response.text).toEqual('<Response></Response>');

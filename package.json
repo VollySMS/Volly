@@ -1,7 +1,7 @@
 {
   "name": "volly",
   "version": "1.0.0",
-  "description": "Volunteer management platform.",
+  "description": "Volunteer management platform for non-profits.",
   "main": "index.js",
   "scripts": {
     "test": "jest -i --coverage",
@@ -21,7 +21,7 @@
   "keywords": [
     "volunteer",
     "management",
-    "awesomeness"
+    "twilio"
   ],
   "author": "Pedja Josifovic && Anthony Robinson && Robert Reed",
   "license": "MIT",
